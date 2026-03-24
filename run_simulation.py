@@ -18,6 +18,7 @@ from src.simulation import Simulation, SimulationConfig
 from src.visualization import (
     plot_simulation, print_event_timeline, print_summary
 )
+from src.animate import generate_animation
 
 
 def main():
@@ -34,6 +35,8 @@ def main():
                         help="Output directory for plots (default: output)")
     parser.add_argument("--no-incarnation", action="store_true",
                         help="Disable incarnational cycle-breaking")
+    parser.add_argument("--animate", action="store_true",
+                        help="Generate animated HTML visualization")
     args = parser.parse_args()
 
     config = SimulationConfig(
@@ -62,6 +65,13 @@ def main():
         saved = plot_simulation(history_df, events_df, args.output_dir)
         for path in saved:
             print(f"  Saved: {path}")
+
+    # Generate animation
+    if args.animate:
+        print(f"\nGenerating animated visualization...")
+        anim_path = generate_animation(history_df, events_df, args.output_dir)
+        print(f"  Saved: {anim_path}")
+        print(f"  Open in browser: file://{Path(anim_path).resolve()}")
 
     # Save data
     csv_path = Path(args.output_dir) / "history.csv"
