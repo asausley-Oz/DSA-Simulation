@@ -191,12 +191,28 @@ class Simulation:
         )
         tick_events.extend(env_events)
 
-        # Track flood count
+        # Track flood count and cycle-breaking (incarnation)
         for e in env_events:
             if e.get("type") == "cataclysmic_reset":
                 self._flood_count += 1
                 # After reset, kill most agents, keep faithful remnant
                 self._post_reset_population()
+            elif e.get("type") == "cycle_breaking":
+                # Incarnation/Resurrection: mark existing remnant as Spirit-indwelt
+                # This is the hinge — the multiplication starts here
+                self._activate_indwelling()
+                tick_events.append({
+                    "tick": self.tick,
+                    "type": "spirit_indwelling",
+                    "description": ("The Spirit falls — remnant agents become indwelt. "
+                                    "Enhanced entropy resistance and missionary "
+                                    "reproduction activated."),
+                    "parallel": "pentecost_pattern"
+                })
+
+        # === Post-Incarnation: Missionary Reproduction ===
+        if self.environment.cycle_tracker.cycle_broken:
+            tick_events.extend(self._step_missionary_reproduction(pop_signals))
 
         # === City Density Effects & Schism Detection ===
         tick_events.extend(self._step_city_schism(pop_signals, env_state))
@@ -284,6 +300,50 @@ class Simulation:
                 "parallel": "abram_pattern"
             }]
         return []
+
+    def _activate_indwelling(self):
+        """Mark all current remnant agents as Spirit-indwelt.
+
+        This fires once when the cycle breaks (incarnation/resurrection).
+        The Spirit doesn't remove the curse — agents still face entropy,
+        rebellion, delusion. But they have enhanced resistance and the
+        capacity to reproduce (missionary function).
+        """
+        for agent in self.population.agents:
+            if agent.alive and agent.is_remnant:
+                agent.indwelt = True
+
+    def _step_missionary_reproduction(self, pop: dict) -> List[dict]:
+        """Post-incarnation: indwelt remnant agents reproduce.
+
+        The missionary function — the multiplication the resurrection unlocks.
+        Scales with city density (gospel spreads fast in cities).
+        Works THROUGH accumulated curses, not by erasing them.
+        """
+        events = []
+        density = pop["city_density"]
+
+        # Any remnant agent alive post-incarnation is indwelt —
+        # born into the Spirit-community, not earning it individually
+        for agent in self.population.agents:
+            if agent.alive and agent.is_remnant and not agent.indwelt:
+                agent.indwelt = True
+
+        converts = self.population.missionary_reproduce(density)
+
+        if converts > 0 and (converts >= 3 or self.tick % 50 == 0):
+            events.append({
+                "tick": self.tick,
+                "type": "missionary_reproduction",
+                "converts": converts,
+                "city_density": density,
+                "description": (f"Gospel multiplies in the cities — {converts} new "
+                                f"converts at density {density:.0%}. The multiplication "
+                                f"works through the accumulated curses."),
+                "parallel": "acts_pattern"
+            })
+
+        return events
 
     def _step_city_schism(self, pop: dict, env: dict) -> List[dict]:
         """Model city density effects on schism pressure.

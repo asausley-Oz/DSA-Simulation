@@ -68,6 +68,7 @@ class Agent:
         )
         self.is_remnant = False
         self.alive = True
+        self.indwelt = False  # Spirit-indwelt post-incarnation — enhanced entropy resistance
 
     def step(self, env_corruption: float, env_heavenly: float,
              divine_engagement: float, grace_space: float,
@@ -80,10 +81,19 @@ class Agent:
         t = self.traits
         noise = self.rng.normal(0, 0.02)
 
+        # === Spirit Indwelling ===
+        # Post-incarnation, agents who respond in faith can be indwelt.
+        # The Spirit doesn't remove the curse — it works THROUGH it.
+        # Indwelt agents have enhanced resistance to entropy, not immunity.
+        # The flesh still wars against the spirit. The curses still press.
+        # But there is a power source that pre-incarnation agents lacked.
+        spirit_factor = 1.4 if self.indwelt else 1.0
+
         # === Faith Dynamics ===
         # DSA: faith is native, real, and genuinely valued
         # Faith grows with divine engagement and awareness, shrinks with delusion
-        faith_growth = (divine_engagement * 0.03 * t.faith_capacity +
+        # Spirit-indwelt agents have amplified faith growth
+        faith_growth = (divine_engagement * 0.03 * t.faith_capacity * spirit_factor +
                        s.awareness * 0.02 +
                        covenant_health * 0.01)
         # Vamphoric Systems: THE FORK — attention split away from the source of life
@@ -106,10 +116,11 @@ class Agent:
                          s.delusion_level * 0.06 +
                          (1.0 - s.awareness) * 0.04 +
                          0.01)  # base rebellion pressure — the gravity of the curse
-        rebellion_resist = (s.faith * 0.03 +
+        rebellion_resist = (s.faith * 0.03 * spirit_factor +
                            t.resilience * 0.015 +
-                           divine_engagement * 0.01)
+                           divine_engagement * 0.01 * spirit_factor)
         # Rebellion never fully vanishes — the flesh wars against the spirit
+        # Even indwelt agents have a rebellion floor — the curse persists
         rebellion_floor = 0.03 + (1.0 - t.faith_capacity) * 0.05
         s.rebellion = np.clip(
             s.rebellion + rebellion_pull - rebellion_resist + noise * 0.3,
@@ -119,8 +130,8 @@ class Agent:
         # Anti-Life Delusion: spiritual death is an active, ongoing process
         # Vamphoric Systems: THE DRAIN — life extracted while appearing beneficial
         vitality_nourish = (env_heavenly * 0.02 +
-                           s.faith * 0.03 +
-                           divine_engagement * 0.02)
+                           s.faith * 0.03 * spirit_factor +
+                           divine_engagement * 0.02 * spirit_factor)
         # The drain operates through corruption, rebellion, and delusion
         # It is built into the structure — not announced, not visible from within
         vamphoric_drain = (s.rebellion * 0.03 +
@@ -136,8 +147,9 @@ class Agent:
                           s.rebellion * 0.01 +
                           (1.0 - t.awareness_sensitivity) * 0.005)
         # Exposure breaks delusion — divine engagement is the greater glory
-        delusion_shrink = (divine_engagement * 0.02 +
-                          s.faith * 0.015 +
+        # Spirit-indwelt agents have enhanced capacity to see through delusion
+        delusion_shrink = (divine_engagement * 0.02 * spirit_factor +
+                          s.faith * 0.015 * spirit_factor +
                           t.resilience * 0.005)
         s.delusion_level = np.clip(
             s.delusion_level + delusion_growth - delusion_shrink, 0.0, 1.0)
@@ -238,6 +250,79 @@ class Population:
             "dead_count": self.size,
             "city_density": 0.0,
         }
+
+    def missionary_reproduce(self, city_density: float) -> int:
+        """Remnant agents who are Spirit-indwelt reproduce — missionary function.
+
+        This is the multiplication that the resurrection unlocks.
+        Indwelt remnant agents in cities can convert non-remnant agents
+        or spawn new believers. The rate scales with city density —
+        the gospel spreads faster where people are concentrated.
+
+        The curses don't lift. The corruption doesn't stop. But the
+        multiplication works THROUGH the accumulated structural damage.
+
+        Returns:
+            Number of new converts this tick.
+        """
+        alive = [a for a in self.agents if a.alive]
+        if not alive:
+            return 0
+
+        # Count indwelt missionaries (remnant + indwelt + high divine labor)
+        missionaries = [a for a in alive
+                       if a.indwelt and a.is_remnant and a.state.divine_labor > 0.3]
+        if not missionaries:
+            return 0
+
+        # Conversion rate scales with density and missionary count
+        # More missionaries in denser cities = faster gospel spread
+        # But it's not automatic — each missionary has a probability
+        missionary_fraction = len(missionaries) / len(alive)
+        conversion_chance = missionary_fraction * city_density * 0.08
+
+        converts = 0
+
+        # First: try to convert existing non-remnant, non-indwelt agents
+        # (the harvest — people already present in the cities)
+        unconverted = [a for a in alive if not a.indwelt and not a.is_remnant]
+        for agent in unconverted:
+            # Agents with higher awareness are more reachable
+            # Agents deep in delusion are harder to reach
+            reachability = agent.state.awareness * (1.0 - agent.state.delusion_level * 0.5)
+            if self.rng.random() < conversion_chance * reachability:
+                # Convert: boost faith, mark as indwelt
+                agent.state.faith = max(agent.state.faith,
+                                       np.clip(self.rng.normal(0.55, 0.15), 0.35, 0.8))
+                agent.state.faithfulness = max(agent.state.faithfulness,
+                                              agent.state.faith * 0.5)
+                agent.state.delusion_level *= 0.5  # scales broken, not erased
+                agent.indwelt = True
+                converts += 1
+
+        # Second: if missionary density is high enough, spawn new agents
+        # (the church planting function — new communities of faith)
+        if missionary_fraction > 0.15 and city_density > 0.5:
+            spawn_chance = missionary_fraction * city_density * 0.03
+            if self.rng.random() < spawn_chance:
+                agent_id = self.size
+                traits = AgentTraits(
+                    faith_capacity=np.clip(self.rng.normal(0.65, 0.15), 0.4, 0.9),
+                    resilience=np.clip(self.rng.normal(0.6, 0.15), 0.3, 0.85),
+                    awareness_sensitivity=np.clip(self.rng.normal(0.65, 0.15), 0.4, 0.9),
+                    relational_capacity=np.clip(self.rng.normal(0.6, 0.15), 0.3, 0.85),
+                )
+                agent = Agent(agent_id, self.rng, traits)
+                agent.state.faith = np.clip(self.rng.normal(0.5, 0.15), 0.3, 0.75)
+                agent.state.faithfulness = agent.state.faith * 0.5
+                agent.state.delusion_level = np.clip(self.rng.normal(0.1, 0.05), 0.0, 0.3)
+                agent.indwelt = True
+                agent.is_remnant = True
+                self.agents.append(agent)
+                self.size += 1
+                converts += 1
+
+        return converts
 
     def inject_faithful_remnant(self, count: int = 5):
         """Introduce highly faithful agents — represents God calling out a people."""
