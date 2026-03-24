@@ -29,7 +29,7 @@ from .agents import Population, Agent, AgentTraits
 class SimulationConfig:
     """Configuration for a simulation run."""
     num_ticks: int = 1000
-    population_size: int = 100
+    population_size: int = 500
     seed: Optional[int] = 42
     enable_atonement: bool = True
     enable_incarnation: bool = True
@@ -270,9 +270,12 @@ class Simulation:
         # population collapse — a FALL from kingdom to remnant.
         # Only triggers once per temple: when population drops below
         # threshold AND the temple was built with a larger population.
+        # Kingdom collapse scales with population size — exile threshold
+        # is when the kingdom shrinks to a small fraction of capacity
+        exile_threshold = max(8, int(self.config.population_size * 0.08))
         if (self._temple_standing and
                 self._sojourn_ended and
-                pop_signals["alive_count"] <= 8 and
+                pop_signals["alive_count"] <= exile_threshold and
                 pop_signals["city_density"] < 0.15 and
                 self._temple_presence > 0.15):  # only destroys a real temple
             # Check this temple hasn't already survived a collapse
@@ -474,7 +477,7 @@ class Simulation:
         alive = [a for a in self.population.agents if a.alive]
         if not alive:
             return
-        n_survive = max(8, int(len(alive) * 0.08))
+        n_survive = max(40, int(len(alive) * 0.08))
         # Most faithful survive
         alive.sort(key=lambda a: a.state.faithfulness, reverse=True)
         for agent in alive[n_survive:]:
@@ -497,7 +500,7 @@ class Simulation:
                 env["natural_vitality"] > 0.25):
             self._calling_fired = True
             # Inject faithful remnant
-            self.population.inject_faithful_remnant(10)
+            self.population.inject_faithful_remnant(50)
             # Activate covenant — this is the CDT turning point
             self.distance.covenant_active = True
             self.distance.state.covenant_strength = 0.4
@@ -526,11 +529,11 @@ class Simulation:
         Ur, the faithful during exile, the hidden remnant in occupation.
         """
         alive = [a for a in self.population.agents if a.alive]
-        if len(alive) >= 5:
+        if len(alive) >= 20:
             return
 
         # Preserve: boost the few remaining or spawn preserved remnant
-        n_needed = 5 - len(alive)
+        n_needed = 20 - len(alive)
 
         # First: boost any living agents to survive
         for agent in alive:
@@ -625,7 +628,7 @@ class Simulation:
 
             # Inject a wave of covenant settlers — the people who
             # crossed the Jordan, the tribes taking the land
-            self.population.inject_faithful_remnant(15)
+            self.population.inject_faithful_remnant(75)
 
             events.append({
                 "tick": self.tick,
@@ -816,8 +819,8 @@ class Simulation:
 
             # Pentecost: inject a wave of new believers — the 3000
             # of Acts 2. The church explodes in the cities.
-            self.population.inject_faithful_remnant(20)
-            for agent in self.population.agents[-20:]:
+            self.population.inject_faithful_remnant(100)
+            for agent in self.population.agents[-100:]:
                 agent.indwelt = True
 
             events.append({
@@ -981,7 +984,7 @@ class Simulation:
         # === Schism Pressure Accumulation ===
         # Pressure builds slowly when conditions are present.
         # All three factors must be non-trivial for pressure to grow.
-        if density > 0.3 and remnant > 0.1 and curses.total_fragmentation > 0.05:
+        if density > 0.1 and remnant > 0.1 and curses.total_fragmentation > 0.05:
             # Pressure grows proportional to all three factors
             # All must be present but the combined effect scales naturally
             growth = density * remnant * curses.total_fragmentation * 0.02
