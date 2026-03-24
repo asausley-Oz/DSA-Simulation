@@ -151,6 +151,14 @@ class Simulation:
         # a remnant persists, God initiates covenant
         tick_events.extend(self._check_calling(pop_signals, env_state, eng_state))
 
+        # === Sync Accumulated Curse Penalties to Distance Engine ===
+        # The curse registry lives in the environment (SCC), but its structural
+        # penalties affect covenant mechanics (CDT). Each tick we propagate them.
+        curses = self.environment.cycle_tracker.curse_registry
+        self.distance.covenant_penalty = curses.total_covenant_penalty
+        self.distance.fragmentation = curses.total_fragmentation
+        self.distance.foreign_pressure = curses.total_foreign_pressure
+
         # === Step Distance (CDT) ===
         atonement = False
         if self.config.enable_atonement:
@@ -287,6 +295,8 @@ class Simulation:
         final_dist = self.distance.get_state_snapshot()
         final_eng = self.engagement.get_state_snapshot()
 
+        curse_summary = self.environment.cycle_tracker.curse_registry.get_summary()
+
         return {
             "total_ticks": self.tick,
             "total_events": len(self.all_events),
@@ -300,6 +310,7 @@ class Simulation:
             "final_presence": final_eng["presence_level"],
             "final_remnant": final_dist["remnant_fraction"],
             "intimacy_milestones": final_dist["intimacy_milestones"],
+            "accumulated_curses": curse_summary,
             "scc_key_question": ("RESOLVED — cycle broken from within"
                                 if final_env["cycle_broken"]
                                 else "UNRESOLVED — cycles continue"),

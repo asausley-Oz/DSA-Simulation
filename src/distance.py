@@ -81,6 +81,11 @@ class DistanceEngine:
         self.delusion_growth = 0.02        # how fast delusion spreads (increased)
         self.counter_movement_rate = 0.01  # how fast God draws near
 
+        # Accumulated cycle curse penalties — set by simulation from environment
+        self.covenant_penalty = 0.0        # reduces covenant effectiveness
+        self.fragmentation = 0.0           # reduces population unity
+        self.foreign_pressure = 0.0        # constant external oppression
+
     def step(self, rebellion_input: float = 0.0,
              faithfulness_input: float = 0.5,
              divine_initiative: float = 0.5,
@@ -108,7 +113,10 @@ class DistanceEngine:
 
         # === Active Distance ===
         # Moves based on net rebellion vs faithfulness and divine movement
-        distance_push = rebellion_input * 0.15 + s.delusion_level * 0.05
+        # Foreign pressure from accumulated curses adds constant distance push
+        distance_push = (rebellion_input * 0.15 +
+                        s.delusion_level * 0.05 +
+                        self.foreign_pressure * 0.03)  # occupation pushes distance
         distance_pull = (faithfulness_input * 0.08 +
                         divine_initiative * 0.06 +
                         s.remnant_fraction * 0.03)
@@ -120,15 +128,22 @@ class DistanceEngine:
 
         # === Curse Weight ===
         # CDT: curses are natural consequences of distance from the Source
-        target_curse = s.cumulative_rebellion * 0.1 + s.active_distance * 0.3
+        # Accumulated cycle curses add a permanent floor to curse weight
+        target_curse = (s.cumulative_rebellion * 0.1 +
+                       s.active_distance * 0.3 +
+                       self.foreign_pressure * 0.2)  # occupation adds curse weight
         s.curse_weight += (target_curse - s.curse_weight) * self.curse_growth_rate
         s.curse_weight = np.clip(s.curse_weight, 0.0, 1.0)
 
         # === Blessing Flow ===
-        # Blessings flow through covenant — blocked by distance and curse
-        covenant_channel = s.covenant_strength * (1.0 - s.active_distance * 0.5)
+        # Blessings flow through covenant — blocked by distance, curse, AND
+        # accumulated structural damage (covenant penalty from cycle failures)
+        covenant_effectiveness = max(0.2, 1.0 - self.covenant_penalty)
+        covenant_channel = (s.covenant_strength * covenant_effectiveness *
+                          (1.0 - s.active_distance * 0.5))
         s.blessing_flow = (self.blessing_base * covenant_channel *
-                          (1.0 - s.curse_weight * 0.4))
+                          (1.0 - s.curse_weight * 0.4) *
+                          (1.0 - self.fragmentation * 0.3))  # fragmentation blocks blessing
         s.blessing_flow = np.clip(s.blessing_flow, 0.0, 1.0)
 
         # === Spiritual Vitality ===
@@ -172,13 +187,15 @@ class DistanceEngine:
         # === Covenant Strength ===
         # Covenant requires explicit activation (calling event)
         # Pre-covenant: only basic relational connection, not formal covenant
+        # Accumulated curses (fragmentation, occupation) reduce covenant ceiling
         if self.covenant_active:
-            s.covenant_strength = np.clip(
-                (faithfulness_input * 0.3 +
-                 divine_initiative * 0.3 +
-                 s.divine_nearness * 0.2 +
-                 s.remnant_fraction * 0.2) - s.active_distance * 0.2,
-                0.0, 1.0)
+            raw_strength = (faithfulness_input * 0.3 +
+                           divine_initiative * 0.3 +
+                           s.divine_nearness * 0.2 +
+                           s.remnant_fraction * 0.2) - s.active_distance * 0.2
+            # Fragmentation caps covenant strength — split kingdom can't unite fully
+            covenant_ceiling = max(0.3, 1.0 - self.fragmentation * 0.6)
+            s.covenant_strength = np.clip(raw_strength, 0.0, covenant_ceiling)
         else:
             # Pre-covenant: minimal relational structure
             s.covenant_strength = np.clip(

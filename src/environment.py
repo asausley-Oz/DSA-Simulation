@@ -43,35 +43,219 @@ class RealmState:
 
 
 @dataclass
+class CycleCurse:
+    """A specific structural curse imposed by a cycle's failure.
+
+    Each curse is permanent within this age. They compound across cycles.
+    Not till Heaven and Earth pass away.
+    """
+    cycle_imposed: int              # which cycle's failure created this curse
+    curse_type: str                 # category of structural damage
+    description: str                # what happened
+    entropy_penalty: float = 0.0    # added to base entropy rate (permanent)
+    covenant_penalty: float = 0.0   # reduces covenant effectiveness (permanent)
+    threshold_tightening: float = 0.0  # how much harder collapse becomes to avoid
+    resistance_penalty: float = 0.0    # reduces effectiveness of resistance
+    fragmentation: float = 0.0         # population unity penalty
+    foreign_pressure: float = 0.0      # constant external oppression
+
+
+@dataclass
+class CycleCurseRegistry:
+    """Tracks ALL accumulated curses across every failed cycle.
+
+    The end of each cycle is the worst generation because it carries
+    the full weight of all prior failures. The curses are cumulative
+    and permanent — they transform the structural conditions, not just
+    the corruption level.
+
+    Post-resurrection works THROUGH these curses, not by erasing them.
+    """
+    curses: List[CycleCurse] = field(default_factory=list)
+
+    def impose_cycle_curse(self, cycle: int) -> CycleCurse:
+        """Impose the appropriate structural curse for a cycle's failure.
+
+        Each successive cycle failure imposes tighter boundaries:
+        - Cycle 0 (pre-flood): wide boundaries, catastrophic failure → corruption floor
+        - Cycle 1 (post-flood): fragmentation, nations scattered, covenant capacity reduced
+        - Cycle 2 (covenant era): kingdom splits, covenant effectiveness halved
+        - Cycle 3+: exile, occupation, foreign pressure, compounding severity
+        """
+        if cycle == 0:
+            curse = CycleCurse(
+                cycle_imposed=cycle,
+                curse_type="corruption_floor",
+                description="Catastrophic corruption — the ground is cursed",
+                entropy_penalty=0.003,
+                threshold_tightening=0.03,
+                resistance_penalty=0.005,
+            )
+        elif cycle == 1:
+            curse = CycleCurse(
+                cycle_imposed=cycle,
+                curse_type="fragmentation",
+                description="Scattering and fragmentation — nations divided, tongues confused",
+                entropy_penalty=0.004,
+                covenant_penalty=0.08,
+                threshold_tightening=0.05,
+                resistance_penalty=0.008,
+                fragmentation=0.15,
+            )
+        elif cycle == 2:
+            curse = CycleCurse(
+                cycle_imposed=cycle,
+                curse_type="kingdom_split",
+                description="Kingdom divided — covenant people torn apart, mission fractured",
+                entropy_penalty=0.005,
+                covenant_penalty=0.15,
+                threshold_tightening=0.06,
+                resistance_penalty=0.01,
+                fragmentation=0.1,
+            )
+        else:
+            # Cycle 3+: exile and occupation, severity escalates but slowly
+            severity = min(cycle - 2, 3)  # caps at cycle 5
+            curse = CycleCurse(
+                cycle_imposed=cycle,
+                curse_type="exile_and_occupation",
+                description=f"Exile and foreign occupation (severity {severity}) — "
+                            f"loss of land, temple, agency under foreign power",
+                entropy_penalty=0.003 + severity * 0.001,
+                covenant_penalty=0.06 + severity * 0.03,
+                threshold_tightening=0.02 + severity * 0.01,
+                resistance_penalty=0.005 + severity * 0.003,
+                fragmentation=0.03 * severity,
+                foreign_pressure=0.05 + severity * 0.025,
+            )
+
+        self.curses.append(curse)
+        return curse
+
+    @property
+    def total_entropy_penalty(self) -> float:
+        """Sum of all accumulated entropy penalties."""
+        return sum(c.entropy_penalty for c in self.curses)
+
+    @property
+    def total_covenant_penalty(self) -> float:
+        """Sum of all accumulated covenant effectiveness penalties."""
+        return sum(c.covenant_penalty for c in self.curses)
+
+    @property
+    def total_threshold_tightening(self) -> float:
+        """Sum of all threshold tightening — makes collapse easier each cycle."""
+        return sum(c.threshold_tightening for c in self.curses)
+
+    @property
+    def total_resistance_penalty(self) -> float:
+        """Sum of all resistance effectiveness penalties."""
+        return sum(c.resistance_penalty for c in self.curses)
+
+    @property
+    def total_fragmentation(self) -> float:
+        """Total fragmentation — reduces population unity and covenant capacity."""
+        return min(0.8, sum(c.fragmentation for c in self.curses))
+
+    @property
+    def total_foreign_pressure(self) -> float:
+        """Total foreign pressure — constant external oppression."""
+        return min(0.6, sum(c.foreign_pressure for c in self.curses))
+
+    @property
+    def curse_count(self) -> int:
+        return len(self.curses)
+
+    def has_curse_type(self, curse_type: str) -> bool:
+        return any(c.curse_type == curse_type for c in self.curses)
+
+    def get_summary(self) -> dict:
+        return {
+            "curse_count": self.curse_count,
+            "curse_types": [c.curse_type for c in self.curses],
+            "total_entropy_penalty": round(self.total_entropy_penalty, 4),
+            "total_covenant_penalty": round(self.total_covenant_penalty, 4),
+            "total_threshold_tightening": round(self.total_threshold_tightening, 4),
+            "total_resistance_penalty": round(self.total_resistance_penalty, 4),
+            "total_fragmentation": round(self.total_fragmentation, 4),
+            "total_foreign_pressure": round(self.total_foreign_pressure, 4),
+        }
+
+
+@dataclass
 class CycleTracker:
     """Tracks the cyclical patterns SCC identifies across all traditions.
 
     SCC: 'The systems are circular and cyclical. They do not resolve.
     They repeat. They spiral without terminus.'
+
+    Each cycle's failure compounds — tighter failure boundaries, structural
+    curses that persist permanently. The end of every cycle is the worst
+    generation because it carries the full weight of all prior failures.
     """
     phase_history: List[str] = field(default_factory=list)
     cycle_count: int = 0
     current_phase: str = "creation"
     cycle_broken: bool = False
+    curse_registry: CycleCurseRegistry = field(default_factory=CycleCurseRegistry)
+    _phase_entered_tick: int = 0    # when we entered the current phase
+    _tick: int = 0                  # current tick (updated each call)
 
-    FLOURISHING_THRESHOLD: float = 0.65
-    DECLINE_THRESHOLD: float = 0.45
-    COLLAPSE_THRESHOLD: float = 0.2
-    RESET_THRESHOLD: float = 0.1
+    # Base thresholds — these get tightened by accumulated curses
+    _BASE_FLOURISHING: float = 0.65
+    _BASE_DECLINE: float = 0.45
+    _BASE_COLLAPSE: float = 0.2
+    _BASE_RESET: float = 0.1
 
-    def update(self, realm: RealmState, covenant_health: float) -> Optional[str]:
+    @property
+    def FLOURISHING_THRESHOLD(self) -> float:
+        """Flourishing gets harder to reach with accumulated curses."""
+        return min(0.9, self._BASE_FLOURISHING + self.curse_registry.total_threshold_tightening)
+
+    @property
+    def DECLINE_THRESHOLD(self) -> float:
+        """Decline triggers earlier with accumulated curses."""
+        tightening = self.curse_registry.total_threshold_tightening
+        return min(0.7, self._BASE_DECLINE + tightening * 0.8)
+
+    @property
+    def COLLAPSE_THRESHOLD(self) -> float:
+        """Collapse triggers earlier with accumulated curses."""
+        tightening = self.curse_registry.total_threshold_tightening
+        return min(0.4, self._BASE_COLLAPSE + tightening * 0.5)
+
+    @property
+    def RESET_THRESHOLD(self) -> float:
+        """Reset triggers earlier with accumulated curses."""
+        tightening = self.curse_registry.total_threshold_tightening
+        return min(0.25, self._BASE_RESET + tightening * 0.3)
+
+    def update(self, realm: RealmState, covenant_health: float, tick: int = 0) -> Optional[str]:
         """Evaluate whether a phase transition has occurred."""
+        self._tick = tick
         combined_health = (realm.natural_vitality + covenant_health) / 2.0
         old_phase = self.current_phase
+        ticks_in_phase = tick - self._phase_entered_tick
+
+        # Grace period scales — God's forbearance gives each cycle time to play out
+        # Later cycles get shorter windows but never instant
+        creation_grace = max(80, 150 - self.cycle_count * 15)
+        decline_grace = max(40, 80 - self.cycle_count * 8)
 
         if self.current_phase == "creation":
             if combined_health >= self.FLOURISHING_THRESHOLD:
                 self.current_phase = "flourishing"
+            elif combined_health < self.DECLINE_THRESHOLD and ticks_in_phase >= creation_grace:
+                # A cursed creation that never reaches flourishing can still decline.
+                # Later cycles may never flourish — the curses prevent it.
+                # But there's always a grace period — a window of possibility
+                # before the accumulated curses take hold.
+                self.current_phase = "decline"
         elif self.current_phase == "flourishing":
             if combined_health < self.DECLINE_THRESHOLD:
                 self.current_phase = "decline"
         elif self.current_phase == "decline":
-            if combined_health < self.COLLAPSE_THRESHOLD:
+            if combined_health < self.COLLAPSE_THRESHOLD and ticks_in_phase >= decline_grace:
                 self.current_phase = "collapse"
             elif combined_health >= self.FLOURISHING_THRESHOLD:
                 self.current_phase = "flourishing"
@@ -81,10 +265,13 @@ class CycleTracker:
             elif combined_health >= self.DECLINE_THRESHOLD:
                 self.current_phase = "decline"
         elif self.current_phase == "reset":
+            # Impose curse for this cycle's failure BEFORE incrementing
+            self.curse_registry.impose_cycle_curse(self.cycle_count)
             self.cycle_count += 1
             self.current_phase = "creation"
 
         if self.current_phase != old_phase:
+            self._phase_entered_tick = tick
             self.phase_history.append(self.current_phase)
             return self.current_phase
         return None
@@ -156,16 +343,23 @@ class Environment:
         #
         # Inputs that INCREASE corruption:
         #   - Base entropy rate (always present — the curse)
+        #   - Accumulated cycle curses (each failed cycle adds permanent penalty)
         #   - Chaos seepage (underworld pressing up)
         #   - Unfaithfulness (rebellion feeds the system)
         #   - Corruption itself (Vamphoric: the system feeds on itself)
+        #   - Foreign pressure (occupation from accumulated curses)
         #
         # Inputs that RESIST corruption:
         #   - Divine engagement (the only force that can truly reverse it)
         #   - Covenant strength (creates structure for resistance)
         #   - Faithfulness (slows but cannot stop)
+        #   - BUT resistance effectiveness is reduced by accumulated curses
+
+        curses = self.cycle_tracker.curse_registry
 
         entropy_input = (self.entropy_base_rate +
+                        curses.total_entropy_penalty +     # permanent curse penalty
+                        curses.total_foreign_pressure * 0.02 +  # occupation pressure
                         self.realm.chaos_seepage * 0.15 +
                         (1.0 - population_faithfulness) * 0.1 +
                         self.realm.corruption_level * self.corruption_feedback)
@@ -175,9 +369,13 @@ class Environment:
         # Faithfulness slows but cannot stop
         # CDT insight: even with covenant, entropy is only SLOWED, never stopped
         # The cycle cannot be broken by human effort or covenant mechanics alone
+        #
+        # Accumulated curses reduce resistance effectiveness —
+        # the structural damage from prior failures constrains capacity
         combined_resistance = divine_engagement * covenant_strength
-        entropy_resistance = (combined_resistance * 0.06 +
-                             population_faithfulness * 0.015)
+        resistance_factor = max(0.3, 1.0 - curses.total_resistance_penalty)
+        entropy_resistance = (combined_resistance * 0.06 * resistance_factor +
+                             population_faithfulness * 0.015 * resistance_factor)
 
         net_entropy = entropy_input - entropy_resistance
         self.realm.corruption_level = np.clip(
@@ -205,7 +403,7 @@ class Environment:
                                           divine_engagement))
 
         # === Cycle Tracking ===
-        phase_change = self.cycle_tracker.update(self.realm, covenant_strength)
+        phase_change = self.cycle_tracker.update(self.realm, covenant_strength, self.tick)
         if phase_change:
             events.append({
                 "tick": self.tick,
@@ -241,20 +439,30 @@ class Environment:
                 r.underworld_pressure > 0.7 and
                 self._cooldown_ok("cataclysmic_reset", 80)):
             self._record_event("cataclysmic_reset")
+            curses = self.cycle_tracker.curse_registry
+            cycle = self.cycle_tracker.cycle_count
             events.append({
                 "tick": self.tick,
                 "type": "cataclysmic_reset",
                 "severity": r.corruption_level,
-                "description": "Entropy overwhelms — cataclysmic reset",
+                "cycle": cycle,
+                "accumulated_curses": curses.curse_count,
+                "description": (f"Entropy overwhelms — cataclysmic reset "
+                                f"(cycle {cycle}, bearing {curses.curse_count} prior curses)"),
                 "parallel": "flood_pattern"
             })
-            # Reset — but CDT: the curse remains, not fully pristine
-            residual_curse = 0.05 + self.cycle_tracker.cycle_count * 0.03
-            r.corruption_level = min(0.2, residual_curse)
-            r.underworld_pressure *= 0.2
-            r.natural_vitality = 0.6
-            r.chaos_seepage *= 0.15
-            r.heavenly_influence = min(1.0, r.heavenly_influence + 0.3)
+            # Reset — but the curse remains, and gets WORSE each cycle.
+            # The corruption floor rises with each accumulated curse.
+            # Each reset starts slightly more corrupted than the last.
+            base_residual = 0.05
+            curse_residual = curses.total_entropy_penalty * 3.0
+            r.corruption_level = min(0.35, base_residual + curse_residual)
+            # Recovery is also diminished by accumulated curses
+            recovery_factor = max(0.4, 1.0 - curses.total_threshold_tightening)
+            r.underworld_pressure *= (0.2 + (1.0 - recovery_factor) * 0.3)
+            r.natural_vitality = 0.6 * recovery_factor + 0.2
+            r.chaos_seepage *= (0.15 + (1.0 - recovery_factor) * 0.2)
+            r.heavenly_influence = min(1.0, r.heavenly_influence + 0.3 * recovery_factor)
 
         # --- Scattering (Babel Pattern) ---
         # Collective ambition without covenant in a still-viable world
@@ -269,6 +477,26 @@ class Environment:
                 "parallel": "babel_pattern"
             })
 
+        # --- Kingdom Split (Covenant Fracture Under Accumulated Curse) ---
+        # When covenant is weakened and fragmentation curses are active,
+        # the unified covenant people split — mission capacity halved
+        curses = self.cycle_tracker.curse_registry
+        if (curses.total_fragmentation > 0.1 and
+                covenant > 0.15 and covenant < 0.4 and
+                r.corruption_level > 0.45 and
+                faithfulness < 0.35 and
+                self._cooldown_ok("kingdom_split", 80)):
+            self._record_event("kingdom_split")
+            events.append({
+                "tick": self.tick,
+                "type": "kingdom_split",
+                "severity": curses.total_fragmentation,
+                "accumulated_curses": curses.curse_count,
+                "description": ("Covenant people divide — kingdom splits under weight "
+                                f"of {curses.curse_count} accumulated curses"),
+                "parallel": "divided_kingdom_pattern"
+            })
+
         # --- Exile (Covenant Collapse Pattern) ---
         # When covenant breaks down completely
         if (covenant < 0.15 and r.corruption_level > 0.6 and
@@ -279,8 +507,29 @@ class Environment:
                 "tick": self.tick,
                 "type": "exile",
                 "severity": 1.0 - covenant,
-                "description": "Covenant collapse — exile conditions manifest",
+                "accumulated_curses": curses.curse_count,
+                "description": (f"Covenant collapse — exile conditions manifest "
+                                f"(bearing {curses.curse_count} accumulated curses)"),
                 "parallel": "exile_pattern"
+            })
+
+        # --- Foreign Occupation (Accumulated Curse Pressure) ---
+        # When foreign_pressure curses are active, occupation constrains agency
+        # This is the structural consequence of accumulated exile curses
+        if (curses.total_foreign_pressure > 0.05 and
+                r.corruption_level > 0.35 and
+                covenant < 0.5 and
+                self._cooldown_ok("occupation", 60)):
+            self._record_event("occupation")
+            events.append({
+                "tick": self.tick,
+                "type": "occupation",
+                "pressure": curses.total_foreign_pressure,
+                "accumulated_curses": curses.curse_count,
+                "description": (f"Foreign occupation constrains covenant people — "
+                                f"agency reduced under {curses.total_foreign_pressure:.0%} "
+                                f"structural pressure from accumulated curses"),
+                "parallel": "occupation_pattern"
             })
 
         # --- Tabernacle Moment ---
@@ -345,6 +594,7 @@ class Environment:
 
     def get_state_snapshot(self) -> dict:
         """Return a complete snapshot of current environmental state."""
+        curses = self.cycle_tracker.curse_registry
         return {
             "tick": self.tick,
             "heavenly_influence": round(self.realm.heavenly_influence, 4),
@@ -358,4 +608,9 @@ class Environment:
             "cycle_phase": self.cycle_tracker.current_phase,
             "cycle_count": self.cycle_tracker.cycle_count,
             "cycle_broken": self.cycle_tracker.cycle_broken,
+            "accumulated_curses": curses.curse_count,
+            "curse_entropy_penalty": round(curses.total_entropy_penalty, 4),
+            "curse_covenant_penalty": round(curses.total_covenant_penalty, 4),
+            "curse_fragmentation": round(curses.total_fragmentation, 4),
+            "curse_foreign_pressure": round(curses.total_foreign_pressure, 4),
         }
