@@ -82,6 +82,7 @@ class Simulation:
         self._temple_presence = 0.0
         self._temple_number = 0       # which temple we're on (0 = none yet)
         self._temple_standing = False  # is a temple currently standing?
+        self._exile_start_tick = 0    # when first temple destroyed (for Cyrus decree)
 
         # === Schism Mechanics ===
         # Cities amplify everything. Post-resurrection, the gospel spreads
@@ -266,8 +267,9 @@ class Simulation:
             # Check this temple hasn't already survived a collapse
             # (the second temple is built BY the remnant, so it's immune)
             if self._temple_number == 1:
-                self._temple_presence = 0.0
+                self._temple_presence = 0.08  # foundations remain
                 self._temple_standing = False
+                self._exile_start_tick = self.tick  # track for Cyrus decree
                 tick_events.append({
                     "tick": self.tick,
                     "type": "temple_destroyed",
@@ -429,11 +431,11 @@ class Simulation:
             return
 
         ticks_since_settlement = self.tick - self._settlement_tick
-        if ticks_since_settlement > 300:
-            return  # settlement growth phase ends
+        if ticks_since_settlement > 800:
+            return  # settlement/kingdom growth phase ends
 
         deficit = self.config.population_size - n_alive
-        n_spawn = max(1, int(deficit * 0.1))
+        n_spawn = max(1, int(deficit * 0.08))
 
         agents = self.population.agents
         for i in range(n_spawn):
@@ -567,13 +569,14 @@ class Simulation:
         # corruption but at its own pace. This is the judgment clock.
         # Not every tick of corruption counts equally — the iniquity
         # builds slowly, then accelerates as it approaches fullness.
-        self._amorite_iniquity += (corruption * 0.0015 +
-                                   self._amorite_iniquity * 0.0003)
+        self._amorite_iniquity += (corruption * 0.0004 +
+                                   self._amorite_iniquity * 0.00005)
         self._amorite_iniquity = min(1.0, self._amorite_iniquity)
 
-        # Minimum sojourn duration — God's timing is not rushed
+        # Minimum sojourn duration — God's timing is not rushed.
+        # 400 years of displacement, forging a people.
         ticks_in_sojourn = self.tick - self._sojourn_start_tick
-        min_sojourn = 200  # at least this many ticks in displacement
+        min_sojourn = 800  # 400 years of displacement, forging a people
 
         # The sojourn ends when the Amorites' iniquity is complete
         # AND enough time has passed for the covenant people to be
@@ -677,18 +680,33 @@ class Simulation:
         # Even a tiny remnant can sustain a temple — 5 faithful families
         # worshipping in exile is enough. Density amplifies but isn't required.
         # But it must outpace the city's corrosive drag to actually grow.
+        # Worship requires minimal faithfulness and covenant, not
+        # necessarily a large remnant fraction. Even 5 families
+        # worshipping faithfully sustains the temple.
+        alive_count = pop.get("alive_count", 0)
         if (faithfulness > 0.2 and covenant > 0.15 and
-                engagement > 0.2 and remnant > 0.02):
+                engagement > 0.2 and alive_count >= 3):
             # Population size amplifies temple growth — more worshippers
             # means faster construction. Solomon had thousands of workers.
             # A city of 50 builds faster than 5 families in exile.
-            pop_factor = 1.0 + density * 1.5  # density=0.5 → 1.75x, density=1.0 → 2.5x
+            # But temple building is generational work, not instant.
+            pop_factor = 1.0 + density * 1.0  # density=0.5 → 1.5x, density=1.0 → 2.0x
 
             growth = (faithfulness * 0.3 +
                      covenant * 0.3 +
                      engagement * 0.2 +
                      density * 0.1 +
                      remnant * 0.1) * 0.003 * pop_factor
+
+            # Cyrus decree: after first temple destruction, a divine
+            # mandate accelerates rebuilding. The exile is short because
+            # God sends the people back. This boost fades over time.
+            if (self._temple_number >= 1 and not self._temple_standing and
+                    self._exile_start_tick > 0):
+                ticks_since_exile = self.tick - self._exile_start_tick
+                if ticks_since_exile < 300:
+                    decree_boost = 3.0 * max(0, 1.0 - ticks_since_exile / 300.0)
+                    growth *= (1.0 + decree_boost)
 
             # Net change: worship growth minus city corruption drag
             net = growth - total_drag
@@ -720,6 +738,8 @@ class Simulation:
             # Temple destruction — standing temple collapses
             if self._temple_standing and self._temple_presence < 0.1:
                 self._temple_standing = False
+                if self._temple_number == 1:
+                    self._exile_start_tick = self.tick  # Cyrus decree clock starts
                 ordinal = {1: "First", 2: "Second", 3: "Third"}.get(
                     self._temple_number, f"Temple #{self._temple_number}")
                 events.append({
@@ -756,9 +776,9 @@ class Simulation:
         # God becomes the temple. The convergence point becomes a person.
         curses = self.environment.cycle_tracker.curse_registry
         if (not self.environment.cycle_tracker.cycle_broken and
-                self._temple_presence > 0.75 and
+                self._temple_presence > 0.55 and
                 curses.curse_count >= 1 and
-                engagement > 0.4):
+                engagement > 0.25):
             self.environment.cycle_tracker.cycle_broken = True
             events.append({
                 "tick": self.tick,
