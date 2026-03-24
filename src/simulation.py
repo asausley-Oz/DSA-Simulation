@@ -114,6 +114,8 @@ class Simulation:
         self._consummated = False
         self._apostasy_level = 0.0   # builds after grace ends
         self._parousia_tick = 0
+        self._settlement_tick = 0    # when settlement/conquest began
+        self._wrath_event_fired = False  # cup of wrath event (once)
 
     def _init_pristine(self):
         """Set pristine Eden conditions. Everything starts perfect."""
@@ -185,7 +187,7 @@ class Simulation:
                 "cdt_divine_nearness": 1.0,
                 "cdt_active_distance": 0.0,
                 "cdt_spiritual_vitality": 1.0,
-                "cdt_intimacy_level": 1.0,
+                "cdt_incremental_intimacy": 1.0,
                 "cdt_remnant_fraction": 1.0,
                 "dsa_presence_level": 1.0,
                 "dsa_grace_space": 1.0,
@@ -1135,19 +1137,36 @@ class Simulation:
                 cycle_broken and
                 not self._grace_period_active):
 
-            # The cup fills when corruption is at or near maximum
-            # and the full weight of curses bears down
-            if corruption >= 0.9:
-                # Cup fills faster with more curses — the accumulated
-                # weight of every failed cycle presses down
-                wrath_rate = 0.002 * corruption
-                wrath_rate *= (1.0 + curses.total_entropy_penalty)
+            # The cup fills from the STRUCTURAL weight of accumulated
+            # curses — not just the corruption level. The post-grace
+            # church can hold corruption down through sheer remnant
+            # strength, but the structural damage is still there.
+            # The cup fills slowly but inevitably as curse weight
+            # grinds against the church's foundations.
+            #
+            # Two pathways fill the cup:
+            # 1. High corruption (>0.7) — the classic entropy overwhelm
+            # 2. Accumulated curse weight — structural damage from every
+            #    failed cycle, grinding even when corruption is controlled
+            curse_structural_weight = (curses.total_entropy_penalty +
+                                       curses.total_fragmentation * 0.5)
+
+            if corruption >= 0.7 or curse_structural_weight > 0.1:
+                # Base rate from corruption
+                wrath_rate = 0.001 * max(corruption, 0.3)
+                # Curse weight accelerates — every failed cycle presses
+                wrath_rate *= (1.0 + curse_structural_weight * 3.0)
                 wrath_rate *= (1.0 + curses.curse_count * 0.05)
+                # Time since grace ended — the longer without protection,
+                # the faster the cup fills
+                ticks_post_grace = self.tick - (self._grace_start_tick + self._grace_duration)
+                time_factor = min(2.0, 1.0 + ticks_post_grace / 2000.0)
+                wrath_rate *= time_factor
                 self._apostasy_level = min(1.0, self._apostasy_level + wrath_rate)
 
             # The cup of wrath event — when it crosses the visible threshold
             if (self._apostasy_level >= 0.3 and
-                    not hasattr(self, '_wrath_event_fired')):
+                    not self._wrath_event_fired):
                 self._wrath_event_fired = True
                 events.append({
                     "tick": self.tick,
@@ -1171,8 +1190,11 @@ class Simulation:
         # When the cup of wrath is full AND the remnant still persists.
         # The end comes at an entropy point, not a calendar date.
         # "As in the days of Noah" — but this time, not a reset.
+        # The parousia fires when the cup overflows — not when
+        # corruption is at absolute maximum, but when the accumulated
+        # weight of every cycle's failure reaches its terminus.
+        # The remnant still persists — that's the point. They endure.
         if (self._apostasy_level >= 0.85 and
-                corruption >= 0.95 and
                 cycle_broken and
                 pop["remnant_fraction"] > 0 and
                 pop["alive_count"] > 0):
@@ -1247,7 +1269,7 @@ class Simulation:
             # Covenant perfected — distance eliminated
             self.distance.state.covenant_strength = 1.0
             self.distance.state.divine_nearness = 1.0
-            self.distance.state.intimacy_level = 1.0
+            self.distance.state.incremental_intimacy = 1.0
             self.distance.state.active_distance = 0.0
             self.distance.covenant_penalty = 0.0
             self.distance.fragmentation = 0.0

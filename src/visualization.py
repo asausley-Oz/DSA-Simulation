@@ -315,6 +315,14 @@ def _event_marker(etype: str) -> str:
         "era_transition": "[ERA]",
         "judges_phase": "[JUDGES]",
         "spirit_indwelling": "[SPIRIT]",
+        "great_schism": "[SCHISM]",
+        "cup_of_wrath": "[WRATH]",
+        "parousia": "[PAROUSIA]",
+        "new_creation": "[NEW CREATION]",
+        "temple_built": "[TEMPLE]",
+        "temple_destroyed": "[DESTRUCTION]",
+        "missionary_reproduction": "[MISSIONARY]",
+        "sojourn_end": "[CONQUEST]",
     }
     return markers.get(etype, f"[{etype.upper()}]")
 

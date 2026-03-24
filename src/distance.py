@@ -172,7 +172,8 @@ class DistanceEngine:
             s.delusion_level + delusion_growth - delusion_shrink, 0.0, 1.0)
 
         # Awareness inversely tracks delusion
-        s.awareness_of_condition = max(0.05, 1.0 - s.delusion_level * 0.9)
+        # Anti-Life Delusion: complete blindness is possible
+        s.awareness_of_condition = max(0.0, 1.0 - s.delusion_level * 0.95)
 
         # === God's Counter-Movement ===
         # CDT: incremental intimacy — God draws nearer over the long arc

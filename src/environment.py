@@ -388,6 +388,12 @@ class Environment:
                              population_faithfulness * 0.015 * resistance_factor)
 
         net_entropy = entropy_input - entropy_resistance
+        # CDT: pre-incarnation, entropy is only SLOWED, never stopped.
+        # Even maximum covenant + divine engagement cannot reverse
+        # the fundamental entropy of the cursed order. Only the
+        # cycle-breaker (incarnation) can achieve true reversal.
+        if not self.cycle_tracker.cycle_broken:
+            net_entropy = max(0.001, net_entropy)
         self.realm.corruption_level = np.clip(
             self.realm.corruption_level + net_entropy * 0.05, 0.0, 1.0)
 

@@ -25,8 +25,8 @@ def main():
     parser = argparse.ArgumentParser(description="DSA Simulation — CDT Biblical Arc")
     parser.add_argument("--ticks", type=int, default=1000,
                         help="Number of simulation ticks (default: 1000)")
-    parser.add_argument("--population", type=int, default=100,
-                        help="Population size (default: 100)")
+    parser.add_argument("--population", type=int, default=500,
+                        help="Population size (default: 500)")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed (default: 42)")
     parser.add_argument("--no-plots", action="store_true",

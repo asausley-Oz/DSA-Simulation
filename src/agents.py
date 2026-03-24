@@ -151,13 +151,31 @@ class Agent:
         delusion_shrink = (divine_engagement * 0.02 * spirit_factor +
                           s.faith * 0.015 * spirit_factor +
                           t.resilience * 0.005)
+
+        # === Pharisee Hardening ===
+        # "They saw the Light and chose the darkness" (John 3:19)
+        # Agents exposed to high divine engagement who persist in
+        # high rebellion HARDEN — exposure without response produces
+        # not softening but calcification. The greater the light
+        # rejected, the deeper the darkness. This is the Pharisee
+        # dynamic: proximity to God's work + refusal = hardening.
+        if divine_engagement > 0.5 and s.rebellion > 0.6 and s.faith < 0.3:
+            # Exposure without response — delusion deepens, not breaks
+            hardening = divine_engagement * s.rebellion * 0.02
+            delusion_growth += hardening
+            delusion_shrink *= 0.3  # exposure loses its power to break through
+
         s.delusion_level = np.clip(
             s.delusion_level + delusion_growth - delusion_shrink, 0.0, 1.0)
 
         # Awareness inversely tracks delusion
         # A person who clearly sees they are dying is halfway toward the gospel
+        # Anti-Life Delusion: delusion can achieve COMPLETE blindness.
+        # Awareness is the precondition of turning — without it,
+        # repentance is not possible. This is the Pharisee condition:
+        # "having eyes but not seeing" (Mark 8:18).
         s.awareness = np.clip(
-            t.awareness_sensitivity * (1.0 - s.delusion_level * 0.8), 0.05, 1.0)
+            t.awareness_sensitivity * (1.0 - s.delusion_level * 0.95), 0.0, 1.0)
 
         # === Imaging ===
         # CDT: reflecting God's character into the world — identity as mission
