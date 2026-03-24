@@ -297,6 +297,7 @@ class Environment:
         self.rng = np.random.default_rng(seed)
         self.event_log: List[dict] = []
         self._last_event_ticks: dict = {}
+        self._flood_occurred = False  # the flood is singular — only one ever
 
         # === Entropy Parameters ===
         # These control the fundamental rate of decay
@@ -441,36 +442,29 @@ class Environment:
         r = self.realm
 
         # --- Cataclysmic Reset (Flood Pattern) ---
-        # When corruption overwhelms and natural vitality collapses
-        if (r.corruption_level > 0.85 and
+        # The flood is SINGULAR — one catastrophic global reset in all of history.
+        # After the flood, subsequent collapses manifest as exile, occupation,
+        # judgment — but never another global wipe. God promised.
+        if (not self._flood_occurred and
+                r.corruption_level > 0.85 and
                 r.natural_vitality < 0.2 and
-                r.underworld_pressure > 0.7 and
-                self._cooldown_ok("cataclysmic_reset", 80)):
+                r.underworld_pressure > 0.7):
+            self._flood_occurred = True
             self._record_event("cataclysmic_reset")
-            curses = self.cycle_tracker.curse_registry
-            cycle = self.cycle_tracker.cycle_count
             events.append({
                 "tick": self.tick,
                 "type": "cataclysmic_reset",
                 "severity": r.corruption_level,
-                "cycle": cycle,
-                "accumulated_curses": curses.curse_count,
-                "description": (f"Entropy overwhelms — cataclysmic reset "
-                                f"(cycle {cycle}, bearing {curses.curse_count} prior curses)"),
+                "cycle": self.cycle_tracker.cycle_count,
+                "description": "Entropy overwhelms — the flood. Once. Never again.",
                 "parallel": "flood_pattern"
             })
-            # Reset — but the curse remains, and gets WORSE each cycle.
-            # The corruption floor rises with each accumulated curse.
-            # Each reset starts slightly more corrupted than the last.
-            base_residual = 0.05
-            curse_residual = curses.total_entropy_penalty * 3.0
-            r.corruption_level = min(0.35, base_residual + curse_residual)
-            # Recovery is also diminished by accumulated curses
-            recovery_factor = max(0.4, 1.0 - curses.total_threshold_tightening)
-            r.underworld_pressure *= (0.2 + (1.0 - recovery_factor) * 0.3)
-            r.natural_vitality = 0.6 * recovery_factor + 0.2
-            r.chaos_seepage *= (0.15 + (1.0 - recovery_factor) * 0.2)
-            r.heavenly_influence = min(1.0, r.heavenly_influence + 0.3 * recovery_factor)
+            # Reset environment — but the curse remains
+            r.corruption_level = 0.05
+            r.underworld_pressure *= 0.2
+            r.natural_vitality = 0.7
+            r.chaos_seepage *= 0.15
+            r.heavenly_influence = min(1.0, r.heavenly_influence + 0.4)
 
         # --- Scattering (Babel Pattern) ---
         # Collective ambition without covenant in a still-viable world
@@ -582,21 +576,10 @@ class Environment:
             })
 
         # --- Cycle Breaking (Incarnation Pattern) ---
-        # When divine engagement enters the cycle at its worst to break it
-        if (self.cycle_tracker.cycle_count >= 2 and
-                divine_engagement > 0.8 and
-                r.corruption_level > 0.3 and
-                faithfulness > 0.3 and
-                covenant > 0.5):
-            if not self.cycle_tracker.cycle_broken:
-                self.cycle_tracker.cycle_broken = True
-                events.append({
-                    "tick": self.tick,
-                    "type": "cycle_breaking",
-                    "description": ("The cycle breaks from within — not escape but death "
-                                    "and resurrection within the cycle"),
-                    "parallel": "incarnation_pattern"
-                })
+        # Now handled by the temple mechanic in the simulation orchestrator.
+        # The temple builds as heaven-earth convergence, and when it reaches
+        # threshold, incarnation fires. God doesn't just visit the temple —
+        # God becomes the temple.
 
         return events
 
