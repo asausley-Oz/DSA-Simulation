@@ -468,10 +468,27 @@ class Simulation:
         engagement = eng["presence_level"]
         remnant = pop["remnant_fraction"]
 
+        # === City Corruption Drain on Temple ===
+        # The city never stops corroding the temple. Like a long-term
+        # relationship gone sour — the surrounding culture pulls toward
+        # compromise. Corruption and density together erode sacred space.
+        # This is ALWAYS active, even when worship is growing the temple.
+        # The temple has to OUTPACE the city's corrosive drag.
+        corruption = env["corruption_level"]
+        city_drag = corruption * density * 0.002 + corruption * 0.0003
+        # Accumulated curses intensify the drag — structural damage
+        # from prior failures makes the city even more hostile to
+        # the sacred. Each curse deepens the hostility.
+        curses = self.environment.cycle_tracker.curse_registry
+        curse_drag = curses.total_fragmentation * 0.0003 + curses.total_foreign_pressure * 0.0002
+
+        total_drag = city_drag + curse_drag
+
         # === Temple Building ===
         # Temple presence grows with sustained covenant worship.
         # Even a tiny remnant can sustain a temple — 5 faithful families
         # worshipping in exile is enough. Density amplifies but isn't required.
+        # But it must outpace the city's corrosive drag to actually grow.
         if (faithfulness > 0.2 and covenant > 0.15 and
                 engagement > 0.2 and remnant > 0.02):
             growth = (faithfulness * 0.3 +
@@ -479,7 +496,11 @@ class Simulation:
                      engagement * 0.2 +
                      density * 0.1 +
                      remnant * 0.1) * 0.002
-            self._temple_presence = min(1.0, self._temple_presence + growth)
+
+            # Net change: worship growth minus city corruption drag
+            net = growth - total_drag
+            self._temple_presence = np.clip(
+                self._temple_presence + net, 0.0, 1.0)
 
             # Temple built event — threshold for first construction
             if not self._temple_built and self._temple_presence > 0.3:
@@ -493,8 +514,9 @@ class Simulation:
                     "parallel": "temple_pattern"
                 })
         else:
-            # Temple decays without sustained worship — slowly
-            self._temple_presence = max(0.0, self._temple_presence - 0.002)
+            # No worship AND city drag — temple erodes faster
+            self._temple_presence = max(0.0,
+                self._temple_presence - 0.002 - total_drag)
 
             # Temple destruction — if it was built but presence collapses
             if (self._temple_built and not self._temple_destroyed and
@@ -504,7 +526,7 @@ class Simulation:
                     "tick": self.tick,
                     "type": "temple_destroyed",
                     "description": ("Temple destroyed — convergence point lost. "
-                                    "But God's presence is not contained by buildings."),
+                                    "The city's corruption consumed the sacred space."),
                     "parallel": "exile_destruction_pattern"
                 })
 
