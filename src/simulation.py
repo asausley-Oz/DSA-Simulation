@@ -482,7 +482,15 @@ class Simulation:
         curses = self.environment.cycle_tracker.curse_registry
         curse_drag = curses.total_fragmentation * 0.0003 + curses.total_foreign_pressure * 0.0002
 
-        total_drag = city_drag + curse_drag
+        # As the temple grows stronger, the city pushes back harder.
+        # The sacred presence threatens the corrupt order — the closer
+        # to incarnation, the more intense the resistance. This creates
+        # fast initial rebuilding (exile is short — Cyrus decree) but
+        # a long grind as temple approaches fullness (centuries of
+        # occupation, Hellenization, Roman pressure on covenant worship).
+        temple_threat = self._temple_presence * corruption * 0.0008
+
+        total_drag = city_drag + curse_drag + temple_threat
 
         # === Temple Building ===
         # Temple presence grows with sustained covenant worship.
