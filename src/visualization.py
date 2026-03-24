@@ -171,10 +171,7 @@ def _plot_dashboard(df: pd.DataFrame, events: pd.DataFrame,
                     out: Path, prefix: str) -> str:
     """Combined dashboard with all key metrics."""
     fig, axes = plt.subplots(4, 1, figsize=(16, 14), sharex=True)
-    fig.suptitle(f"{prefix}DSA Simulation — CDT Biblical Arc", fontsize=16, fontweight="bold")
-
-    # Mark era boundaries on all axes
-    _mark_era_boundaries(axes, events)
+    fig.suptitle(f"{prefix}DSA Simulation — Entropy-Driven Dynamics", fontsize=16, fontweight="bold")
 
     # Row 1: SCC Environment
     ax = axes[0]
@@ -329,9 +326,8 @@ def print_summary(summary: dict):
     print("=" * 70)
     print(f"  Total ticks:          {summary['total_ticks']}")
     print(f"  Total events:         {summary['total_events']}")
-    print(f"  Final era:            {summary.get('final_era', 'N/A')}")
-    print(f"  Judges cycles:        {summary.get('judges_cycles', 0)}")
-    print(f"  SCC cycles completed: {summary['cycles_completed']}")
+    print(f"  Flood resets:         {summary.get('flood_count', 0)}")
+    print(f"  Entropy cycles:       {summary['cycles_completed']}")
     print(f"  Intimacy milestones:  {summary['intimacy_milestones']}")
     print()
     print(f"  Final corruption:     {summary['final_corruption']:.4f}")

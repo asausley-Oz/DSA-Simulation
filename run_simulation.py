@@ -43,7 +43,7 @@ def main():
         enable_incarnation=not args.no_incarnation,
     )
 
-    print(f"Running DSA Simulation (CDT Biblical Arc): {config.num_ticks} ticks, "
+    print(f"Running DSA Simulation (Entropy-Driven): {config.num_ticks} ticks, "
           f"{config.population_size} agents, seed={config.seed}")
     print()
 

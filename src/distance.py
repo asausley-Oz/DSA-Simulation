@@ -72,6 +72,7 @@ class DistanceEngine:
         self.tick = 0
         self.intimacy_milestones: List[dict] = []
         self._last_event_ticks: dict = {}
+        self.covenant_active = False  # covenant requires explicit calling to activate
 
         # Parameters
         self.rebellion_decay = 0.001       # very slow natural decay of rebellion
@@ -169,12 +170,20 @@ class DistanceEngine:
             s.divine_nearness + nearness_drive * self.counter_movement_rate, 0.0, 1.0)
 
         # === Covenant Strength ===
-        s.covenant_strength = np.clip(
-            (faithfulness_input * 0.3 +
-             divine_initiative * 0.3 +
-             s.divine_nearness * 0.2 +
-             s.remnant_fraction * 0.2) - s.active_distance * 0.2,
-            0.0, 1.0)
+        # Covenant requires explicit activation (calling event)
+        # Pre-covenant: only basic relational connection, not formal covenant
+        if self.covenant_active:
+            s.covenant_strength = np.clip(
+                (faithfulness_input * 0.3 +
+                 divine_initiative * 0.3 +
+                 s.divine_nearness * 0.2 +
+                 s.remnant_fraction * 0.2) - s.active_distance * 0.2,
+                0.0, 1.0)
+        else:
+            # Pre-covenant: minimal relational structure
+            s.covenant_strength = np.clip(
+                faithfulness_input * 0.1 - s.active_distance * 0.3,
+                0.0, 0.15)
 
         # === Remnant Dynamics ===
         # The remnant grows with divine engagement, shrinks with delusion

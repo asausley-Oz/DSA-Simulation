@@ -6,10 +6,11 @@ Models the cosmological environment from Shared Collective Cosmology (SCC):
 - Underworld influence: chaos ascending from below (corruption, decay, entropy)
 - Natural realm: the convergence zone where both forces meet
 
-The environment is NOT date-driven. Events emerge from the dynamics:
-when heavenly influence wanes and corruption peaks, flood-like resets emerge naturally.
-When distance accumulates, exile conditions manifest. The simulation discovers
-biblical-pattern events rather than scripting them.
+ENTROPY IS THE DOMINANT FORCE. Corruption accumulates relentlessly.
+Only active resistance (covenant + divine engagement) slows it.
+Faithfulness alone cannot stop it — this is the CDT insight.
+
+Events emerge from entropy thresholds, not timelines.
 """
 
 import numpy as np
@@ -23,18 +24,16 @@ class RealmState:
     heavenly_influence: float = 1.0      # 0.0 = absent, 1.0 = full presence
     underworld_pressure: float = 0.0     # 0.0 = contained, 1.0 = overwhelming
     natural_vitality: float = 1.0        # health of the convergence zone
-    corruption_level: float = 0.0        # accumulated corruption in the natural realm
+    corruption_level: float = 0.0        # accumulated corruption (entropy)
     life_force_flow: float = 1.0         # rate of life force descending from above
     chaos_seepage: float = 0.0           # rate of chaos ascending from below
 
     def convergence_tension(self) -> float:
-        """The tension between heavenly and underworld forces in the natural realm.
-        High tension = instability, potential for dramatic events."""
+        """The tension between heavenly and underworld forces in the natural realm."""
         return abs(self.heavenly_influence - self.underworld_pressure)
 
     def beauty_darkness_ratio(self) -> float:
-        """SCC: the natural world contains both extraordinary beauty and profound darkness.
-        Returns ratio of beauty to total (beauty + darkness). 0.5 = balanced."""
+        """SCC: the natural world contains both extraordinary beauty and profound darkness."""
         beauty = self.heavenly_influence * self.life_force_flow * self.natural_vitality
         darkness = self.underworld_pressure * self.chaos_seepage * (1 + self.corruption_level)
         total = beauty + darkness
@@ -49,24 +48,19 @@ class CycleTracker:
 
     SCC: 'The systems are circular and cyclical. They do not resolve.
     They repeat. They spiral without terminus.'
-
-    This tracker detects when the simulation enters recognizable cycle phases
-    and whether any cycle has been broken (the key SCC question).
     """
     phase_history: List[str] = field(default_factory=list)
     cycle_count: int = 0
-    current_phase: str = "creation"  # creation, flourishing, decline, collapse, reset
+    current_phase: str = "creation"
     cycle_broken: bool = False
 
-    # Thresholds for phase transitions
     FLOURISHING_THRESHOLD: float = 0.65
     DECLINE_THRESHOLD: float = 0.45
     COLLAPSE_THRESHOLD: float = 0.2
     RESET_THRESHOLD: float = 0.1
 
     def update(self, realm: RealmState, covenant_health: float) -> Optional[str]:
-        """Evaluate whether a phase transition has occurred.
-        Returns the new phase name if transitioned, None otherwise."""
+        """Evaluate whether a phase transition has occurred."""
         combined_health = (realm.natural_vitality + covenant_health) / 2.0
         old_phase = self.current_phase
 
@@ -80,12 +74,12 @@ class CycleTracker:
             if combined_health < self.COLLAPSE_THRESHOLD:
                 self.current_phase = "collapse"
             elif combined_health >= self.FLOURISHING_THRESHOLD:
-                self.current_phase = "flourishing"  # partial restoration
+                self.current_phase = "flourishing"
         elif self.current_phase == "collapse":
             if combined_health < self.RESET_THRESHOLD:
                 self.current_phase = "reset"
             elif combined_health >= self.DECLINE_THRESHOLD:
-                self.current_phase = "decline"  # recovery without full reset
+                self.current_phase = "decline"
         elif self.current_phase == "reset":
             self.cycle_count += 1
             self.current_phase = "creation"
@@ -99,12 +93,14 @@ class CycleTracker:
 class Environment:
     """The cosmological environment engine.
 
-    Models SCC's three-realm structure as a dynamic system where:
-    - Heavenly influence naturally sustains life but can be blocked by rebellion
-    - Underworld chaos constantly presses upward, exploiting any gap
-    - The natural realm is the battleground where both forces converge
-    - Corruption accumulates over time (CDT: cumulative distance)
-    - Cycles emerge naturally from these dynamics
+    CORE PRINCIPLE: Entropy is relentless.
+
+    Without active divine engagement + covenant, corruption wins.
+    Faithfulness slows it. Covenant slows it more. Divine engagement
+    can reverse it. But nothing human stops it permanently.
+
+    This is the CDT insight: the cycle cannot be broken from within
+    by human effort. Only God entering the cycle breaks it.
     """
 
     def __init__(self, seed: Optional[int] = None):
@@ -115,90 +111,98 @@ class Environment:
         self.event_log: List[dict] = []
         self._last_event_ticks: dict = {}
 
-        # Environmental parameters
-        self.corruption_decay_rate = 0.001    # corruption slowly self-reinforces
-        self.chaos_base_rate = 0.04           # baseline chaos pressure (always pressing)
-        self.life_force_base = 1.0            # baseline heavenly flow
-        self.natural_resilience = 0.85        # nature resists but imperfectly
+        # === Entropy Parameters ===
+        # These control the fundamental rate of decay
+        self.entropy_base_rate = 0.015       # corruption accumulates every tick
+        self.chaos_base_rate = 0.04          # chaos always presses upward
+        self.corruption_feedback = 0.15      # corruption accelerates itself (Vamphoric)
+        self.life_force_base = 1.0
 
     def step(self, population_faithfulness: float = 0.5,
              covenant_strength: float = 0.5,
              divine_engagement: float = 0.5) -> List[dict]:
-        """Advance the environment by one tick.
-
-        Args:
-            population_faithfulness: aggregate faithfulness of agents (0-1)
-            covenant_strength: strength of active covenant relationship (0-1)
-            divine_engagement: DSA sovereign engagement level (0-1)
-
-        Returns:
-            List of emergent events detected this tick.
-        """
+        """Advance the environment by one tick."""
         self.tick += 1
         events = []
 
         # === Life Force Flow ===
         # SCC: life originates from highest heaven, descends into natural order.
-        # Faithfulness and covenant create channels; rebellion blocks them.
-        channel_openness = (population_faithfulness * 0.4 +
-                           covenant_strength * 0.3 +
-                           divine_engagement * 0.3)
+        # Without covenant and divine engagement, the channel narrows.
+        # Faithfulness helps but cannot sustain the channel alone.
+        channel_openness = (population_faithfulness * 0.3 +
+                           covenant_strength * 0.35 +
+                           divine_engagement * 0.35)
         self.realm.life_force_flow = self.life_force_base * channel_openness
 
-        # Heavenly influence tracks life force flow with some inertia
-        target_heavenly = min(1.0, self.realm.life_force_flow * 0.8 + divine_engagement * 0.2)
-        self.realm.heavenly_influence += (target_heavenly - self.realm.heavenly_influence) * 0.1
+        # Heavenly influence tracks life force with inertia
+        target_heavenly = min(1.0, self.realm.life_force_flow * 0.7 + divine_engagement * 0.3)
+        self.realm.heavenly_influence += (target_heavenly - self.realm.heavenly_influence) * 0.08
 
         # === Chaos Seepage ===
-        # Underworld pressure exploits gaps in heavenly coverage
-        heavenly_shield = self.realm.heavenly_influence * covenant_strength
+        # Underworld pressure exploits ANY gap in heavenly coverage
+        heavenly_shield = self.realm.heavenly_influence * max(covenant_strength, 0.1)
         chaos_opportunity = max(0, 1.0 - heavenly_shield)
         self.realm.chaos_seepage = (self.chaos_base_rate +
-                                     chaos_opportunity * 0.1 +
-                                     self.realm.corruption_level * 0.05)
+                                    chaos_opportunity * 0.12 +
+                                    self.realm.corruption_level * 0.08)
 
-        # Underworld pressure builds based on chaos seepage
+        # Underworld pressure builds — it ratchets up, slow to retreat
         self.realm.underworld_pressure = min(1.0,
-            self.realm.underworld_pressure * 0.95 + self.realm.chaos_seepage * 0.15)
+            self.realm.underworld_pressure * 0.97 + self.realm.chaos_seepage * 0.12)
 
-        # === Corruption Accumulation (Vamphoric Systems) ===
-        # CDT: corruption is cumulative — each act adds to the distance
-        # Vamphoric Systems: parasitic structures that drain life while mimicking it
-        # The drain is built into the environment — not announced, not visible from within
-        corruption_input = (self.realm.chaos_seepage * 0.3 +
-                           (1.0 - population_faithfulness) * 0.25 +
-                           self.realm.underworld_pressure * 0.15 +
-                           0.02)  # base corruption — the post-Fall world is cursed
-        # Exposure breaks the system — divine engagement + faithfulness resist
-        corruption_resistance = (self.realm.heavenly_influence * 0.2 +
-                                population_faithfulness * 0.15 +
-                                divine_engagement * 0.08)
-        net_corruption = corruption_input - corruption_resistance
-        # CDT: corruption never fully vanishes in the cursed world — minimum floor
-        corruption_floor = 0.05
+        # === ENTROPY: Corruption Accumulation ===
+        # This is the heart of the system.
+        # Corruption ALWAYS accumulates. The question is how fast.
+        #
+        # Inputs that INCREASE corruption:
+        #   - Base entropy rate (always present — the curse)
+        #   - Chaos seepage (underworld pressing up)
+        #   - Unfaithfulness (rebellion feeds the system)
+        #   - Corruption itself (Vamphoric: the system feeds on itself)
+        #
+        # Inputs that RESIST corruption:
+        #   - Divine engagement (the only force that can truly reverse it)
+        #   - Covenant strength (creates structure for resistance)
+        #   - Faithfulness (slows but cannot stop)
+
+        entropy_input = (self.entropy_base_rate +
+                        self.realm.chaos_seepage * 0.15 +
+                        (1.0 - population_faithfulness) * 0.1 +
+                        self.realm.corruption_level * self.corruption_feedback)
+
+        # ONLY covenant + divine engagement TOGETHER resist entropy
+        # Presence alone is not protective — DSA: space as grace
+        # Faithfulness slows but cannot stop
+        # CDT insight: even with covenant, entropy is only SLOWED, never stopped
+        # The cycle cannot be broken by human effort or covenant mechanics alone
+        combined_resistance = divine_engagement * covenant_strength
+        entropy_resistance = (combined_resistance * 0.06 +
+                             population_faithfulness * 0.015)
+
+        net_entropy = entropy_input - entropy_resistance
         self.realm.corruption_level = np.clip(
-            self.realm.corruption_level + net_corruption * 0.06,
-            corruption_floor, 1.0)
+            self.realm.corruption_level + net_entropy * 0.05, 0.0, 1.0)
 
         # === Natural Vitality ===
-        # The health of the convergence zone
-        vitality_support = (self.realm.life_force_flow * 0.4 +
-                           self.realm.heavenly_influence * 0.3 +
-                           population_faithfulness * 0.2 +
-                           self.natural_resilience * 0.1)
-        vitality_drain = (self.realm.corruption_level * 0.3 +
+        vitality_support = (self.realm.life_force_flow * 0.35 +
+                           self.realm.heavenly_influence * 0.25 +
+                           population_faithfulness * 0.15 +
+                           divine_engagement * 0.15 +
+                           0.1)  # base resilience of creation
+        vitality_drain = (self.realm.corruption_level * 0.35 +
                          self.realm.underworld_pressure * 0.2 +
                          self.realm.chaos_seepage * 0.1)
         target_vitality = np.clip(vitality_support - vitality_drain, 0.0, 1.0)
-        self.realm.natural_vitality += (target_vitality - self.realm.natural_vitality) * 0.08
+        self.realm.natural_vitality += (target_vitality - self.realm.natural_vitality) * 0.06
 
-        # Add small random perturbations
-        noise = self.rng.normal(0, 0.01)
+        # Small random perturbation
+        noise = self.rng.normal(0, 0.008)
         self.realm.natural_vitality = np.clip(
             self.realm.natural_vitality + noise, 0.0, 1.0)
 
         # === Emergent Event Detection ===
-        events.extend(self._detect_events(population_faithfulness, covenant_strength))
+        events.extend(self._detect_events(population_faithfulness, covenant_strength,
+                                          divine_engagement))
 
         # === Cycle Tracking ===
         phase_change = self.cycle_tracker.update(self.realm, covenant_strength)
@@ -221,48 +225,54 @@ class Environment:
     def _record_event(self, event_type: str):
         self._last_event_ticks[event_type] = self.tick
 
-    def _detect_events(self, faithfulness: float, covenant: float) -> List[dict]:
-        """Detect emergent events from environmental dynamics.
+    def _detect_events(self, faithfulness: float, covenant: float,
+                       divine_engagement: float) -> List[dict]:
+        """Detect emergent events purely from entropy thresholds.
 
-        Events are NOT scripted — they emerge when conditions align.
-        The simulation discovers patterns that parallel biblical events.
+        NO TIMELINES. Events fire when conditions are met.
         """
         events = []
         r = self.realm
 
-        # --- Flood-type Reset ---
-        if (r.corruption_level > 0.9 and r.underworld_pressure > 0.8 and
-                r.natural_vitality < 0.15 and faithfulness < 0.1 and
-                self._cooldown_ok("cataclysmic_reset", 100)):
+        # --- Cataclysmic Reset (Flood Pattern) ---
+        # When corruption overwhelms and natural vitality collapses
+        if (r.corruption_level > 0.85 and
+                r.natural_vitality < 0.2 and
+                r.underworld_pressure > 0.7 and
+                self._cooldown_ok("cataclysmic_reset", 80)):
             self._record_event("cataclysmic_reset")
             events.append({
                 "tick": self.tick,
                 "type": "cataclysmic_reset",
                 "severity": r.corruption_level,
-                "description": "Corruption overwhelms natural realm — cataclysmic reset initiated",
+                "description": "Entropy overwhelms — cataclysmic reset",
                 "parallel": "flood_pattern"
             })
-            # Reset environment but not to pristine — CDT: curse remains
-            r.corruption_level *= 0.2
-            r.underworld_pressure *= 0.3
-            r.natural_vitality = 0.5
-            r.chaos_seepage *= 0.2
+            # Reset — but CDT: the curse remains, not fully pristine
+            residual_curse = 0.05 + self.cycle_tracker.cycle_count * 0.03
+            r.corruption_level = min(0.2, residual_curse)
+            r.underworld_pressure *= 0.2
+            r.natural_vitality = 0.6
+            r.chaos_seepage *= 0.15
+            r.heavenly_influence = min(1.0, r.heavenly_influence + 0.3)
 
-        # --- Babel-type Scattering ---
+        # --- Scattering (Babel Pattern) ---
+        # Collective ambition without covenant in a still-viable world
         if (faithfulness < 0.2 and covenant < 0.15 and
-                r.natural_vitality > 0.6 and r.corruption_level > 0.5 and
+                r.natural_vitality > 0.5 and r.corruption_level > 0.4 and
                 self._cooldown_ok("scattering", 80)):
             self._record_event("scattering")
             events.append({
                 "tick": self.tick,
                 "type": "scattering",
-                "description": "Collective ambition without covenant — scattering occurs",
+                "description": "Collective ambition without covenant — scattering",
                 "parallel": "babel_pattern"
             })
 
-        # --- Exile Conditions ---
-        if (covenant < 0.1 and r.corruption_level > 0.7 and
-                r.heavenly_influence < 0.3 and
+        # --- Exile (Covenant Collapse Pattern) ---
+        # When covenant breaks down completely
+        if (covenant < 0.15 and r.corruption_level > 0.6 and
+                r.heavenly_influence < 0.35 and
                 self._cooldown_ok("exile", 60)):
             self._record_event("exile")
             events.append({
@@ -274,8 +284,9 @@ class Environment:
             })
 
         # --- Tabernacle Moment ---
-        if (r.heavenly_influence > 0.8 and faithfulness > 0.7 and
-                covenant > 0.6 and r.convergence_tension() > 0.5 and
+        # Heaven and earth converge — requires high engagement + faithfulness
+        if (r.heavenly_influence > 0.75 and faithfulness > 0.6 and
+                covenant > 0.5 and r.convergence_tension() > 0.4 and
                 self._cooldown_ok("tabernacle_moment", 50)):
             self._record_event("tabernacle_moment")
             events.append({
@@ -287,20 +298,22 @@ class Environment:
             })
 
         # --- Remnant Emergence ---
-        if (r.corruption_level > 0.6 and faithfulness > 0.3 and
-                r.underworld_pressure > 0.5 and
+        # Faithful minority persists amid corruption
+        if (r.corruption_level > 0.5 and faithfulness > 0.25 and
+                r.underworld_pressure > 0.4 and
                 self._cooldown_ok("remnant_emergence", 40)):
             self._record_event("remnant_emergence")
             events.append({
                 "tick": self.tick,
                 "type": "remnant_emergence",
-                "description": "Faithful remnant persists amid corruption",
+                "description": "Faithful remnant persists amid entropy",
                 "parallel": "remnant_pattern"
             })
 
         # --- Divine Incursion ---
-        if (r.heavenly_influence > 0.85 and r.life_force_flow > 0.8 and
-                r.convergence_tension() > 0.6 and
+        # God choosing to enter and engage in a particular moment
+        if (r.heavenly_influence > 0.8 and r.life_force_flow > 0.7 and
+                divine_engagement > 0.7 and
                 self._cooldown_ok("divine_incursion", 50)):
             self._record_event("divine_incursion")
             events.append({
@@ -311,13 +324,13 @@ class Environment:
                 "parallel": "theophany_pattern"
             })
 
-        # --- Cycle Breaking (the SCC key question) ---
-        # When divine engagement + incarnational pattern breaks the cycle
+        # --- Cycle Breaking (Incarnation Pattern) ---
+        # When divine engagement enters the cycle at its worst to break it
         if (self.cycle_tracker.cycle_count >= 2 and
-                r.heavenly_influence > 0.9 and
-                r.corruption_level > 0.5 and
-                faithfulness > 0.5 and
-                covenant > 0.7):
+                divine_engagement > 0.8 and
+                r.corruption_level > 0.3 and
+                faithfulness > 0.3 and
+                covenant > 0.5):
             if not self.cycle_tracker.cycle_broken:
                 self.cycle_tracker.cycle_broken = True
                 events.append({
