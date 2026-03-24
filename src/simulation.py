@@ -84,6 +84,17 @@ class Simulation:
         self._temple_standing = False  # is a temple currently standing?
         self._exile_start_tick = 0    # when first temple destroyed (for Cyrus decree)
 
+        # === Grace Period (the Millennium) ===
+        # After incarnation, the Spirit reduces "the bent" — the
+        # gravitational pull toward corruption across the whole system.
+        # The curse doesn't lift, but its grip loosens. For ~1000 years
+        # the church operates under reduced entropy pressure.
+        # When grace fades, the Great Schism fractures the church.
+        self._grace_period_active = False
+        self._grace_start_tick = 0
+        self._grace_duration = 1000  # ticks of reduced bent
+        self._great_schism_fired = False
+
         # === Schism Mechanics ===
         # Cities amplify everything. Post-resurrection, the gospel spreads
         # fast in cities — but the accumulated fragmentation curse means
@@ -308,6 +319,12 @@ class Simulation:
         if self.environment.cycle_tracker.cycle_broken:
             tick_events.extend(self._step_missionary_reproduction(pop_signals))
 
+        # === Grace Period (the Millennium) ===
+        # During grace: reduced bent, church grows under protection.
+        # When grace fades: the Great Schism fires.
+        if self._grace_period_active:
+            tick_events.extend(self._step_grace_period(pop_signals))
+
         # === City Density Effects & Schism Detection ===
         tick_events.extend(self._step_city_schism(pop_signals, env_state))
 
@@ -321,6 +338,7 @@ class Simulation:
             **{f"dsa_{k}": v for k, v in self.engagement.get_state_snapshot().items()
                if k != "tick"},
             **{f"pop_{k}": v for k, v in pop_signals.items()},
+            "grace_period_active": self._grace_period_active,
             "sojourn_active": self._sojourn_active,
             "amorite_iniquity": round(self._amorite_iniquity, 4),
             "temple_presence": round(self._temple_presence, 4),
@@ -791,14 +809,23 @@ class Simulation:
                                 "within the cycle."),
                 "parallel": "incarnation_pattern"
             })
-            # Incarnation activates indwelling
+            # Incarnation activates indwelling and grace period
             self._activate_indwelling()
+            self._grace_period_active = True
+            self._grace_start_tick = self.tick
+
+            # Pentecost: inject a wave of new believers — the 3000
+            # of Acts 2. The church explodes in the cities.
+            self.population.inject_faithful_remnant(20)
+            for agent in self.population.agents[-20:]:
+                agent.indwelt = True
+
             events.append({
                 "tick": self.tick,
                 "type": "spirit_indwelling",
                 "description": ("The Spirit falls — remnant agents become indwelt. "
-                                "Enhanced entropy resistance and missionary "
-                                "reproduction activated."),
+                                "Grace period begins: the bent is reduced. "
+                                "Pentecost — thousands added to the church."),
                 "parallel": "pentecost_pattern"
             })
 
@@ -844,6 +871,84 @@ class Simulation:
                                 f"converts at density {density:.0%}. The multiplication "
                                 f"works through the accumulated curses."),
                 "parallel": "acts_pattern"
+            })
+
+        return events
+
+    def _step_grace_period(self, pop: dict) -> List[dict]:
+        """The 1000-year grace period — the bent is reduced.
+
+        After incarnation, the Spirit's presence reduces the gravitational
+        pull toward corruption across the whole system. The curse persists
+        but its grip loosens. Entropy still accumulates, but slower.
+        The church grows under this reduced pressure.
+
+        When the grace period expires, the bent returns to full force
+        and the Great Schism fires — the accumulated fragmentation
+        curse fractures the church at its first full exposure to
+        unreduced entropy.
+        """
+        events = []
+        ticks_in_grace = self.tick - self._grace_start_tick
+
+        if ticks_in_grace <= self._grace_duration:
+            # === The Bent is Reduced ===
+            # During grace, corruption pressure is dampened system-wide.
+            # The Spirit works through the church to slow entropy.
+            # This isn't immunity — it's resistance. The curse still
+            # operates, but at reduced intensity.
+            grace_strength = 1.0 - (ticks_in_grace / self._grace_duration) * 0.3
+            # grace_strength fades from 1.0 to 0.7 over the period
+
+            # Reduce corruption directly — the Spirit pushing back.
+            # The bent is reduced enough for cities to become viable
+            # for the church. People can survive and multiply.
+            # During grace, corruption is CAPPED — the Spirit doesn't
+            # just push back against entropy, it holds a ceiling.
+            # The ceiling rises as grace fades (0.3 → 0.7 over 1000 ticks).
+            grace_ceiling = 0.3 + (1.0 - grace_strength) * 0.6
+            if self.environment.realm.corruption_level > grace_ceiling:
+                self.environment.realm.corruption_level = grace_ceiling
+
+            # Boost agent resilience during grace — indwelt agents
+            # are sustained, and even non-indwelt agents benefit
+            # from the reduced bent (common grace)
+            for agent in self.population.agents:
+                if agent.alive:
+                    boost = 0.008 if agent.indwelt else 0.003
+                    agent.state.spiritual_vitality = min(1.0,
+                        agent.state.spiritual_vitality + boost * grace_strength)
+                    # Reduce rebellion pressure — the bent loosens
+                    agent.state.rebellion = max(
+                        agent.state.rebellion - 0.002 * grace_strength,
+                        0.03)
+
+        elif not self._great_schism_fired:
+            # === Grace Period Expires — the Great Schism ===
+            # The reduced bent snaps back. The church, having grown
+            # under protection, now faces the full weight of accumulated
+            # curses for the first time. The fragmentation curse —
+            # carried from Babel through every cycle — fractures the
+            # church along fault lines that were masked by grace.
+            self._great_schism_fired = True
+            self._grace_period_active = False
+
+            # The schism damages covenant strength significantly
+            self.distance.state.covenant_strength *= 0.6
+
+            # Fragmentation intensifies
+            curses = self.environment.cycle_tracker.curse_registry
+            events.append({
+                "tick": self.tick,
+                "type": "great_schism",
+                "grace_duration": self._grace_duration,
+                "accumulated_curses": curses.curse_count,
+                "description": (f"The Great Schism — grace period ends after "
+                                f"{self._grace_duration} ticks. The bent returns "
+                                f"to full force. The church fractures under "
+                                f"{curses.curse_count} accumulated curses. "
+                                f"East and West divide."),
+                "parallel": "great_schism_pattern"
             })
 
         return events
