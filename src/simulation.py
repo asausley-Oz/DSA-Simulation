@@ -62,6 +62,16 @@ class Simulation:
         self._calling_fired = False
         self._flood_count = 0
 
+        # === Schism Mechanics ===
+        # Cities amplify everything. Post-resurrection, the gospel spreads
+        # fast in cities — but the accumulated fragmentation curse means
+        # the multiplied faithful eventually split. Schism pressure builds
+        # slowly and only fires when it crosses a HIGH threshold.
+        # Not every gathering becomes a schism.
+        self._schism_pressure = 0.0
+        self._schism_count = 0
+        self._last_schism_tick = -200
+
     def _init_pristine(self):
         """Set pristine Eden conditions. Everything starts perfect."""
         # Environment: pristine
@@ -177,6 +187,7 @@ class Simulation:
             population_faithfulness=pop_signals["population_faithfulness"],
             covenant_strength=self.distance.state.covenant_strength,
             divine_engagement=divine_engagement,
+            city_density=pop_signals["city_density"],
         )
         tick_events.extend(env_events)
 
@@ -186,6 +197,9 @@ class Simulation:
                 self._flood_count += 1
                 # After reset, kill most agents, keep faithful remnant
                 self._post_reset_population()
+
+        # === City Density Effects & Schism Detection ===
+        tick_events.extend(self._step_city_schism(pop_signals, env_state))
 
         # === Record History ===
         snapshot = {
@@ -197,6 +211,8 @@ class Simulation:
             **{f"dsa_{k}": v for k, v in self.engagement.get_state_snapshot().items()
                if k != "tick"},
             **{f"pop_{k}": v for k, v in pop_signals.items()},
+            "schism_pressure": round(self._schism_pressure, 4),
+            "schism_count": self._schism_count,
             "event_count": len(tick_events),
         }
         self.history.append(snapshot)
@@ -269,6 +285,82 @@ class Simulation:
             }]
         return []
 
+    def _step_city_schism(self, pop: dict, env: dict) -> List[dict]:
+        """Model city density effects on schism pressure.
+
+        Cities never stopped being corrupting agents. Post-resurrection,
+        the gospel comes to Gentile cities ripe for harvest — density
+        amplifies the spread. But the church in cities becomes factions.
+
+        Schism pressure builds when:
+        - City density is high (concentrated population)
+        - Remnant fraction is significant (enough believers to factionate)
+        - Accumulated fragmentation curse is present (structural weakness)
+        - Cycle has been broken (post-resurrection context)
+
+        Schism only fires at a HIGH threshold — not every start is a schism.
+        It takes sustained pressure building over many ticks.
+        """
+        events = []
+        density = pop["city_density"]
+        remnant = pop["remnant_fraction"]
+        curses = self.environment.cycle_tracker.curse_registry
+        cycle_broken = self.environment.cycle_tracker.cycle_broken
+
+        # Post-resurrection: density amplifies remnant growth
+        # (handled in distance engine via city_density in environment)
+
+        # === Schism Pressure Accumulation ===
+        # Pressure builds slowly when conditions are present.
+        # All three factors must be non-trivial for pressure to grow.
+        if density > 0.3 and remnant > 0.1 and curses.total_fragmentation > 0.05:
+            # Pressure grows proportional to all three factors
+            # All must be present but the combined effect scales naturally
+            growth = density * remnant * curses.total_fragmentation * 0.02
+
+            # Post-cycle-breaking intensifies — the gospel multiplies fast
+            # in cities, which means MORE believers to factionate
+            if cycle_broken:
+                growth *= 2.5
+
+            self._schism_pressure = min(1.0, self._schism_pressure + growth)
+        else:
+            # Slow decay when conditions aren't met — pressure doesn't vanish instantly
+            self._schism_pressure = max(0.0, self._schism_pressure - 0.001)
+
+        # === Schism Event Detection ===
+        # HIGH threshold — not every gathering splits.
+        # Takes sustained pressure to actually fracture.
+        schism_threshold = 0.7
+        cooldown = 100  # minimum ticks between schisms
+
+        if (self._schism_pressure >= schism_threshold and
+                self.tick - self._last_schism_tick >= cooldown):
+            self._schism_count += 1
+            self._last_schism_tick = self.tick
+            # Schism partially releases pressure but doesn't reset it —
+            # the structural fault lines remain
+            self._schism_pressure *= 0.5
+
+            # Schism damages covenant strength
+            self.distance.state.covenant_strength *= 0.85
+
+            events.append({
+                "tick": self.tick,
+                "type": "schism",
+                "pressure_at_break": self._schism_pressure * 2,  # pre-release value
+                "schism_number": self._schism_count,
+                "city_density": density,
+                "accumulated_curses": curses.curse_count,
+                "description": (f"Church fractures in the cities — schism #{self._schism_count}. "
+                                f"Density {density:.0%}, bearing {curses.curse_count} "
+                                f"accumulated curses. The fragmentation curse "
+                                f"operates through the multiplied faithful."),
+                "parallel": "faction_pattern"
+            })
+
+        return events
+
     def _check_atonement_conditions(self, pop: dict, dist: dict, eng: dict) -> bool:
         """Atonement emerges when covenant is active and distance is significant."""
         return (pop["remnant_fraction"] > 0.1 and
@@ -310,6 +402,8 @@ class Simulation:
             "final_presence": final_eng["presence_level"],
             "final_remnant": final_dist["remnant_fraction"],
             "intimacy_milestones": final_dist["intimacy_milestones"],
+            "schism_count": self._schism_count,
+            "schism_pressure": round(self._schism_pressure, 4),
             "accumulated_curses": curse_summary,
             "scc_key_question": ("RESOLVED — cycle broken from within"
                                 if final_env["cycle_broken"]

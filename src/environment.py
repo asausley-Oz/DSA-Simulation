@@ -307,7 +307,8 @@ class Environment:
 
     def step(self, population_faithfulness: float = 0.5,
              covenant_strength: float = 0.5,
-             divine_engagement: float = 0.5) -> List[dict]:
+             divine_engagement: float = 0.5,
+             city_density: float = 0.5) -> List[dict]:
         """Advance the environment by one tick."""
         self.tick += 1
         events = []
@@ -348,6 +349,9 @@ class Environment:
         #   - Unfaithfulness (rebellion feeds the system)
         #   - Corruption itself (Vamphoric: the system feeds on itself)
         #   - Foreign pressure (occupation from accumulated curses)
+        #   - City density (cities ALWAYS amplify corruption — Cain's line,
+        #     Babel, Sodom. Concentration of humanity without covenant
+        #     is concentration of corruption. This never stops.)
         #
         # Inputs that RESIST corruption:
         #   - Divine engagement (the only force that can truly reverse it)
@@ -357,12 +361,16 @@ class Environment:
 
         curses = self.cycle_tracker.curse_registry
 
+        # City density amplifies corruption feedback — the vamphoric
+        # systems scale with density. More people, faster corruption spread.
+        density_amplifier = 1.0 + city_density * 0.3
+
         entropy_input = (self.entropy_base_rate +
                         curses.total_entropy_penalty +     # permanent curse penalty
                         curses.total_foreign_pressure * 0.02 +  # occupation pressure
                         self.realm.chaos_seepage * 0.15 +
                         (1.0 - population_faithfulness) * 0.1 +
-                        self.realm.corruption_level * self.corruption_feedback)
+                        self.realm.corruption_level * self.corruption_feedback * density_amplifier)
 
         # ONLY covenant + divine engagement TOGETHER resist entropy
         # Presence alone is not protective — DSA: space as grace

@@ -181,6 +181,7 @@ class Population:
             Agent(i, self.rng) for i in range(size)
         ]
         self.size = size
+        self._initial_size = size  # baseline for density calculation
 
     def step(self, env_corruption: float, env_heavenly: float,
              divine_engagement: float, grace_space: float,
@@ -195,17 +196,32 @@ class Population:
             return self._empty_signals()
 
         n = len(alive)
+        remnant_fraction = sum(1 for a in alive if a.is_remnant) / n
+
+        # === City Density ===
+        # Density is a function of living population concentration.
+        # As population grows/concentrates, density rises.
+        # Density amplifies EVERYTHING — corruption spreads faster,
+        # but so does gospel (post-resurrection). Cities never stop
+        # being corrupting agents, but they also become harvest fields.
+        #
+        # Normalized: density approaches 1.0 as population fills capacity.
+        # The initial population size is the baseline — growth beyond it
+        # increases density, death below it decreases it.
+        density = min(1.0, n / max(1, self._initial_size))
+
         return {
             "population_faithfulness": sum(a.state.faithfulness for a in alive) / n,
             "population_faith": sum(a.state.faith for a in alive) / n,
             "population_rebellion": sum(a.state.rebellion for a in alive) / n,
-            "remnant_fraction": sum(1 for a in alive if a.is_remnant) / n,
+            "remnant_fraction": remnant_fraction,
             "avg_spiritual_vitality": sum(a.state.spiritual_vitality for a in alive) / n,
             "avg_delusion": sum(a.state.delusion_level for a in alive) / n,
             "avg_imaging": sum(a.state.imaging_quality for a in alive) / n,
             "avg_divine_labor": sum(a.state.divine_labor for a in alive) / n,
             "alive_count": n,
             "dead_count": self.size - n,
+            "city_density": density,
         }
 
     def _empty_signals(self) -> dict:
@@ -220,6 +236,7 @@ class Population:
             "avg_divine_labor": 0.0,
             "alive_count": 0,
             "dead_count": self.size,
+            "city_density": 0.0,
         }
 
     def inject_faithful_remnant(self, count: int = 5):
