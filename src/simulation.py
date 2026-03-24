@@ -63,6 +63,17 @@ class Simulation:
         self._flood_occurred = False
         self._flood_tick = 0  # when the flood happened (for repopulation timing)
 
+        # === Sojourn Mechanics ===
+        # The 400-year pause: after calling, the covenant people are
+        # displaced (Egypt). God deliberately waits for the Amorites'
+        # iniquity to fill up. Temple cannot be built during sojourn.
+        # The sojourn ends when the land's corruption reaches the
+        # judgment threshold — the iniquity of the Amorites is complete.
+        self._sojourn_active = False
+        self._sojourn_start_tick = 0
+        self._sojourn_ended = False
+        self._amorite_iniquity = 0.0  # accumulates toward judgment
+
         # === Temple Mechanics ===
         # The temple is the heaven-earth convergence point — a localized
         # entropy drain in the city. It sustains the remnant against
@@ -146,6 +157,12 @@ class Simulation:
         # population is viable again, independent of generational turnover.
         if self._flood_occurred:
             self._repopulate_post_flood()
+
+        # === Settlement Repopulation ===
+        # After sojourn ends, the covenant people take the land and multiply.
+        # Conquest → Judges → Kingdom era. Population grows to fill the land.
+        if self._sojourn_ended:
+            self._repopulate_settlement()
 
         # === Minimum Remnant Preservation ===
         # CDT: God always preserves a remnant — sovereign, not natural
@@ -234,15 +251,56 @@ class Simulation:
                         "parallel": "curse_pattern"
                     })
 
+        # === Kingdom Collapse Destroys Temple ===
+        # When the kingdom era population collapses, the temple falls.
+        # Babylon didn't attack a thriving kingdom — they burned the
+        # temple of a people already in decline. The exile IS the
+        # population collapse — a FALL from kingdom to remnant.
+        # Only triggers once per temple: when population drops below
+        # threshold AND the temple was built with a larger population.
+        if (self._temple_standing and
+                self._sojourn_ended and
+                pop_signals["alive_count"] <= 8 and
+                pop_signals["city_density"] < 0.15 and
+                self._temple_presence > 0.15):  # only destroys a real temple
+            # Check this temple hasn't already survived a collapse
+            # (the second temple is built BY the remnant, so it's immune)
+            if self._temple_number == 1:
+                self._temple_presence = 0.0
+                self._temple_standing = False
+                tick_events.append({
+                    "tick": self.tick,
+                    "type": "temple_destroyed",
+                    "temple_number": self._temple_number,
+                    "description": ("First temple destroyed — the kingdom "
+                                    "collapsed, the city fell, the sacred space "
+                                    "is consumed. Exile."),
+                    "parallel": "exile_destruction_pattern"
+                })
+        # Exile events also damage temple
+        for e in env_events:
+            if e.get("type") == "exile" and self._temple_standing:
+                self._temple_presence *= 0.4
+
+        # === Sojourn Mechanics ===
+        # During the sojourn, covenant people are displaced.
+        # The Amorites' iniquity accumulates toward judgment.
+        # Temple cannot be built until the sojourn ends.
+        if self._sojourn_active:
+            tick_events.extend(self._step_sojourn(
+                self.environment.get_state_snapshot()))
+
         # === Temple Mechanics ===
         # Temple builds as heaven-earth convergence in the city.
         # When it reaches threshold, triggers incarnation.
-        tick_events.extend(self._step_temple(
-            pop_signals,
-            self.environment.get_state_snapshot(),
-            self.engagement.get_state_snapshot(),
-            self.distance.get_state_snapshot(),
-        ))
+        # BLOCKED during sojourn — can't build in a land not yet given.
+        if not self._sojourn_active:
+            tick_events.extend(self._step_temple(
+                pop_signals,
+                self.environment.get_state_snapshot(),
+                self.engagement.get_state_snapshot(),
+                self.distance.get_state_snapshot(),
+            ))
 
         # === Post-Incarnation: Missionary Reproduction ===
         if self.environment.cycle_tracker.cycle_broken:
@@ -261,6 +319,8 @@ class Simulation:
             **{f"dsa_{k}": v for k, v in self.engagement.get_state_snapshot().items()
                if k != "tick"},
             **{f"pop_{k}": v for k, v in pop_signals.items()},
+            "sojourn_active": self._sojourn_active,
+            "amorite_iniquity": round(self._amorite_iniquity, 4),
             "temple_presence": round(self._temple_presence, 4),
             "schism_pressure": round(self._schism_pressure, 4),
             "schism_count": self._schism_count,
@@ -354,6 +414,41 @@ class Simulation:
 
         self.population.size = len(agents)
 
+    def _repopulate_settlement(self):
+        """Settlement repopulation — covenant people fill the promised land.
+
+        After the sojourn, the people multiply in the land God gave them.
+        This creates the kingdom era: judges, united kingdom, temple building.
+        The repopulation gives the first temple a viable population base.
+        """
+        alive = [a for a in self.population.agents if a.alive]
+        n_alive = len(alive)
+        if n_alive >= self.config.population_size:
+            return
+        if self.tick % 8 != 0:
+            return
+
+        ticks_since_settlement = self.tick - self._settlement_tick
+        if ticks_since_settlement > 300:
+            return  # settlement growth phase ends
+
+        deficit = self.config.population_size - n_alive
+        n_spawn = max(1, int(deficit * 0.1))
+
+        agents = self.population.agents
+        for i in range(n_spawn):
+            new_id = len(agents) + i
+            agent = Agent(new_id, self.rng)
+            # Children of the covenant in the promised land —
+            # raised with knowledge of God's acts (exodus, conquest)
+            agent.state.faith = np.clip(self.rng.normal(0.4, 0.15), 0.15, 0.65)
+            agent.state.faithfulness = np.clip(self.rng.normal(0.35, 0.1), 0.15, 0.55)
+            agent.state.rebellion = np.clip(self.rng.normal(0.2, 0.1), 0.05, 0.4)
+            agent.state.delusion_level = np.clip(self.rng.normal(0.1, 0.08), 0.0, 0.3)
+            agent.state.spiritual_vitality = np.clip(self.rng.normal(0.7, 0.1), 0.4, 0.9)
+            agents.append(agent)
+        self.population.size = len(agents)
+
     def _post_reset_population(self):
         """After a cataclysmic reset, most die. A remnant survives."""
         alive = [a for a in self.population.agents if a.alive]
@@ -388,10 +483,16 @@ class Simulation:
             self.distance.state.covenant_strength = 0.4
             self.distance.state.divine_nearness = min(1.0,
                 self.distance.state.divine_nearness + 0.2)
+            # Begin the sojourn — covenant people exist but are displaced.
+            # Temple cannot be built until the Amorites' iniquity is full.
+            self._sojourn_active = True
+            self._sojourn_start_tick = self.tick
             return [{
                 "tick": self.tick,
                 "type": "calling",
-                "description": "God calls out a faithful people — covenant initiated",
+                "description": "God calls out a faithful people — covenant initiated. "
+                               "The sojourn begins — displaced among the nations, "
+                               "waiting for the fullness of time.",
                 "parallel": "abram_pattern"
             }]
         return []
@@ -439,6 +540,85 @@ class Simulation:
                 agent.is_remnant = True
                 agents.append(agent)
             self.population.size = len(agents)
+
+    def _step_sojourn(self, env: dict) -> List[dict]:
+        """The 400-year sojourn — God waits for the Amorites' iniquity.
+
+        Genesis 15:13-16: 'your offspring will be strangers in a land
+        not their own... for the iniquity of the Amorites is not yet
+        complete.'
+
+        The covenant people exist and are preserved, but they are
+        displaced — unable to build the temple. Meanwhile, the land's
+        corruption accumulates. God is deliberately waiting (DSA:
+        patience as sovereign choice). The sojourn ends when the
+        Amorites' iniquity crosses the judgment threshold.
+
+        During the sojourn:
+        - Temple growth is blocked
+        - Amorite iniquity accumulates from environmental corruption
+        - God's patience is active (not absent)
+        - The covenant people are refined in displacement
+        """
+        events = []
+        corruption = env["corruption_level"]
+
+        # Amorite iniquity accumulates — driven by environmental
+        # corruption but at its own pace. This is the judgment clock.
+        # Not every tick of corruption counts equally — the iniquity
+        # builds slowly, then accelerates as it approaches fullness.
+        self._amorite_iniquity += (corruption * 0.0015 +
+                                   self._amorite_iniquity * 0.0003)
+        self._amorite_iniquity = min(1.0, self._amorite_iniquity)
+
+        # Minimum sojourn duration — God's timing is not rushed
+        ticks_in_sojourn = self.tick - self._sojourn_start_tick
+        min_sojourn = 200  # at least this many ticks in displacement
+
+        # The sojourn ends when the Amorites' iniquity is complete
+        # AND enough time has passed for the covenant people to be
+        # forged in displacement.
+        if (self._amorite_iniquity > 0.7 and
+                ticks_in_sojourn >= min_sojourn):
+            self._sojourn_active = False
+            self._sojourn_ended = True
+            self._settlement_tick = self.tick
+
+            # === Settlement / Conquest ===
+            # The covenant people enter the land and multiply.
+            # God gives the land — the Amorites' judgment is complete.
+            # The land is cleansed by divine judgment — a significant
+            # corruption reset. This gives a flourishing window for
+            # the kingdom era: judges, united monarchy, temple building.
+            # Think Solomon's reign — prosperity, peace, construction.
+            # The judgment doesn't just suppress corruption — it
+            # dismantles the corrupt infrastructure. The Amorites' cities
+            # are destroyed. It takes generations for new corruption
+            # to rebuild. This gives the kingdom era its flourishing window.
+            self.environment.realm.corruption_level = 0.02
+            self.environment.realm.underworld_pressure = 0.05
+            self.environment.realm.chaos_seepage = 0.02
+            self.environment.realm.natural_vitality = 0.85
+            self.environment.realm.heavenly_influence = min(1.0,
+                self.environment.realm.heavenly_influence + 0.4)
+
+            # Inject a wave of covenant settlers — the people who
+            # crossed the Jordan, the tribes taking the land
+            self.population.inject_faithful_remnant(15)
+
+            events.append({
+                "tick": self.tick,
+                "type": "sojourn_ends",
+                "duration": ticks_in_sojourn,
+                "amorite_iniquity": round(self._amorite_iniquity, 3),
+                "description": (f"The iniquity of the Amorites is complete — "
+                                f"sojourn ends after {ticks_in_sojourn} ticks. "
+                                f"The covenant people enter the land. "
+                                f"Settlement and conquest begin."),
+                "parallel": "exodus_conquest_pattern"
+            })
+
+        return events
 
     def _step_temple(self, pop: dict, env: dict, eng: dict, dist: dict) -> List[dict]:
         """Temple mechanic — heaven-earth convergence point in the city.
@@ -488,7 +668,7 @@ class Simulation:
         # fast initial rebuilding (exile is short — Cyrus decree) but
         # a long grind as temple approaches fullness (centuries of
         # occupation, Hellenization, Roman pressure on covenant worship).
-        temple_threat = self._temple_presence * corruption * 0.0008
+        temple_threat = self._temple_presence * corruption * 0.0005
 
         total_drag = city_drag + curse_drag + temple_threat
 
@@ -499,11 +679,16 @@ class Simulation:
         # But it must outpace the city's corrosive drag to actually grow.
         if (faithfulness > 0.2 and covenant > 0.15 and
                 engagement > 0.2 and remnant > 0.02):
+            # Population size amplifies temple growth — more worshippers
+            # means faster construction. Solomon had thousands of workers.
+            # A city of 50 builds faster than 5 families in exile.
+            pop_factor = 1.0 + density * 1.5  # density=0.5 → 1.75x, density=1.0 → 2.5x
+
             growth = (faithfulness * 0.3 +
                      covenant * 0.3 +
                      engagement * 0.2 +
                      density * 0.1 +
-                     remnant * 0.1) * 0.003
+                     remnant * 0.1) * 0.003 * pop_factor
 
             # Net change: worship growth minus city corruption drag
             net = growth - total_drag
