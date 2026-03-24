@@ -105,6 +105,16 @@ class Simulation:
         self._schism_count = 0
         self._last_schism_tick = -200
 
+        # === Eschatological State ===
+        # After the Great Schism, entropy overwhelms the post-grace church.
+        # The final apostasy builds as corruption returns to maximum.
+        # When conditions reach their darkest — yet the remnant persists —
+        # the cycle-breaker returns. Not escape but consummation.
+        # The parousia resolves what the flood could only reset.
+        self._consummated = False
+        self._apostasy_level = 0.0   # builds after grace ends
+        self._parousia_tick = 0
+
     def _init_pristine(self):
         """Set pristine Eden conditions. Everything starts perfect."""
         # Environment: pristine
@@ -156,6 +166,47 @@ class Simulation:
         """Execute one simulation tick. Returns events from this tick."""
         self.tick += 1
         tick_events = []
+
+        # === Post-Consummation: New Creation State ===
+        # After the parousia, the simulation continues but in a
+        # qualitatively different state. No entropy, no decay, no cycles.
+        # We record the stable state without running the full engine.
+        if self._consummated:
+            snapshot = {
+                "tick": self.tick,
+                "env_corruption_level": 0.0,
+                "env_heavenly_influence": 1.0,
+                "env_underworld_pressure": 0.0,
+                "env_natural_vitality": 1.0,
+                "env_cycle_count": self.environment.cycle_tracker.cycle_count,
+                "env_cycle_broken": True,
+                "env_current_phase": "new_creation",
+                "cdt_covenant_health": 1.0,
+                "cdt_divine_nearness": 1.0,
+                "cdt_active_distance": 0.0,
+                "cdt_spiritual_vitality": 1.0,
+                "cdt_intimacy_level": 1.0,
+                "cdt_remnant_fraction": 1.0,
+                "dsa_presence_level": 1.0,
+                "dsa_grace_space": 1.0,
+                "pop_alive_count": len(self.population.agents),
+                "pop_remnant_fraction": 1.0,
+                "pop_population_faithfulness": 1.0,
+                "pop_population_rebellion": 0.0,
+                "pop_avg_spiritual_vitality": 1.0,
+                "pop_city_density": 1.0,
+                "grace_period_active": False,
+                "sojourn_active": False,
+                "amorite_iniquity": 0.0,
+                "temple_presence": 1.0,
+                "schism_pressure": 0.0,
+                "schism_count": self._schism_count,
+                "apostasy_level": 0.0,
+                "consummated": True,
+                "event_count": 0,
+            }
+            self.history.append(snapshot)
+            return []
 
         # === Generational Turnover ===
         # Every generation, some agents die and new ones are born.
@@ -331,6 +382,19 @@ class Simulation:
         # === City Density Effects & Schism Detection ===
         tick_events.extend(self._step_city_schism(pop_signals, env_state))
 
+        # === Eschatological Consummation ===
+        # After the Great Schism, apostasy builds toward final darkness.
+        # When the remnant is nearly overwhelmed — the return.
+        if self._consummated:
+            # Post-consummation: maintain new creation state
+            self._step_new_creation()
+        else:
+            tick_events.extend(self._step_consummation(
+                pop_signals,
+                self.environment.get_state_snapshot(),
+                self.engagement.get_state_snapshot(),
+            ))
+
         # === Record History ===
         snapshot = {
             "tick": self.tick,
@@ -347,6 +411,8 @@ class Simulation:
             "temple_presence": round(self._temple_presence, 4),
             "schism_pressure": round(self._schism_pressure, 4),
             "schism_count": self._schism_count,
+            "apostasy_level": round(self._apostasy_level, 4),
+            "consummated": self._consummated,
             "event_count": len(tick_events),
         }
         self.history.append(snapshot)
@@ -1032,6 +1098,208 @@ class Simulation:
 
         return events
 
+    def _step_consummation(self, pop: dict, env: dict, eng: dict) -> List[dict]:
+        """Model the eschatological ending — the cup of wrath, parousia, new creation.
+
+        The end comes at an entropy point. The cup of wrath is not a
+        metaphor — it's accumulated entropy that reaches a terminal
+        threshold. Every cycle's curses compound. Every failed generation
+        adds weight. The cup fills.
+
+        After the Great Schism, the bent returns to full force. Corruption
+        climbs back to maximum. The post-grace church faces the full
+        weight of every accumulated curse without the Spirit's restraining
+        hand. The cup of wrath fills as entropy accumulates beyond what
+        any prior cycle endured.
+
+        When the cup overflows — the parousia fires.
+
+        The parousia is NOT a reset. The flood was a reset — entropy
+        cleared but curses remain, cycle continues. The parousia is
+        RESOLUTION — every curse resolved, entropy permanently defeated,
+        heaven-earth convergence made permanent. What the flood couldn't
+        do, what the temple could only localize, what incarnation could
+        only initiate — consummation completes.
+        """
+        events = []
+        cycle_broken = self.environment.cycle_tracker.cycle_broken
+        corruption = env["corruption_level"]
+        curses = self.environment.cycle_tracker.curse_registry
+
+        # === The Cup of Wrath Fills ===
+        # After grace ends, entropy accumulates without restraint.
+        # The cup of wrath is the total accumulated entropy burden —
+        # corruption level PLUS the structural weight of every curse.
+        # Each tick at maximum corruption adds to the cup.
+        if (self._great_schism_fired and
+                cycle_broken and
+                not self._grace_period_active):
+
+            # The cup fills when corruption is at or near maximum
+            # and the full weight of curses bears down
+            if corruption >= 0.9:
+                # Cup fills faster with more curses — the accumulated
+                # weight of every failed cycle presses down
+                wrath_rate = 0.002 * corruption
+                wrath_rate *= (1.0 + curses.total_entropy_penalty)
+                wrath_rate *= (1.0 + curses.curse_count * 0.05)
+                self._apostasy_level = min(1.0, self._apostasy_level + wrath_rate)
+
+            # The cup of wrath event — when it crosses the visible threshold
+            if (self._apostasy_level >= 0.3 and
+                    not hasattr(self, '_wrath_event_fired')):
+                self._wrath_event_fired = True
+                events.append({
+                    "tick": self.tick,
+                    "type": "cup_of_wrath",
+                    "wrath_level": round(self._apostasy_level, 4),
+                    "corruption": round(corruption, 4),
+                    "accumulated_curses": curses.curse_count,
+                    "total_entropy_penalty": round(curses.total_entropy_penalty, 4),
+                    "description": (
+                        f"The cup of wrath fills — {self._apostasy_level:.0%} full. "
+                        f"Corruption at {corruption:.0%} under {curses.curse_count} "
+                        f"accumulated curses (entropy penalty "
+                        f"{curses.total_entropy_penalty:.3f}). "
+                        f"The post-grace church bears the full weight of "
+                        f"every cycle's failure. The cup that the flood could "
+                        f"only empty now fills to overflowing."),
+                    "parallel": "wrath_pattern"
+                })
+
+        # === The Parousia — The Cup Overflows ===
+        # When the cup of wrath is full AND the remnant still persists.
+        # The end comes at an entropy point, not a calendar date.
+        # "As in the days of Noah" — but this time, not a reset.
+        if (self._apostasy_level >= 0.85 and
+                corruption >= 0.95 and
+                cycle_broken and
+                pop["remnant_fraction"] > 0 and
+                pop["alive_count"] > 0):
+
+            self._consummated = True
+            self._parousia_tick = self.tick
+
+            events.append({
+                "tick": self.tick,
+                "type": "parousia",
+                "apostasy_at_return": round(self._apostasy_level, 4),
+                "corruption_at_return": round(corruption, 4),
+                "remnant_at_return": pop["alive_count"],
+                "accumulated_curses": curses.curse_count,
+                "schisms_endured": self._schism_count,
+                "description": (
+                    f"The cycle-breaker returns — parousia. Not escape but "
+                    f"consummation. Apostasy at {self._apostasy_level:.0%}, "
+                    f"corruption at {corruption:.0%}, bearing "
+                    f"{curses.curse_count} accumulated curses from every "
+                    f"cycle. {pop['alive_count']} faithful remain. "
+                    f"What the flood could only reset, the return resolves."),
+                "parallel": "parousia_pattern"
+            })
+
+            # === Phase 3: Curse Resolution ===
+            # Every accumulated curse — from every failed cycle —
+            # is resolved. Not reversed (as if they never happened)
+            # but fulfilled and overcome. The structural damage heals.
+            resolved_curses = curses.curse_count
+            for curse in curses.curses:
+                curse.resolved = True
+            events.append({
+                "tick": self.tick,
+                "type": "curse_resolution",
+                "curses_resolved": resolved_curses,
+                "description": (
+                    f"All {resolved_curses} accumulated curses resolved. "
+                    f"The structural damage from every cycle — fragmentation, "
+                    f"foreign pressure, covenant penalties, entropy penalties "
+                    f"— fulfilled and overcome. Not reversed but completed."),
+                "parallel": "resolution_pattern"
+            })
+
+            # === Phase 4: New Creation ===
+            # Entropy permanently defeated. Heaven-earth convergence
+            # made permanent. All agents restored.
+            # This is categorically different from a reset:
+            # - Reset: corruption cleared, curses remain, cycle continues
+            # - New creation: curses resolved, entropy source sealed,
+            #   convergence permanent, no more cycles
+            realm = self.environment.realm
+            realm.corruption_level = 0.0
+            realm.heavenly_influence = 1.0
+            realm.underworld_pressure = 0.0
+            realm.natural_vitality = 1.0
+            realm.life_force_flow = 1.0
+            realm.chaos_seepage = 0.0
+
+            # Restore all agents — resurrection of the dead
+            for agent in self.population.agents:
+                agent.alive = True
+                agent.state.faith = 1.0
+                agent.state.faithfulness = 1.0
+                agent.state.rebellion = 0.0
+                agent.state.spiritual_vitality = 1.0
+                agent.state.delusion_level = 0.0
+                agent.state.awareness = 1.0
+                agent.is_remnant = True
+                agent.indwelt = True
+
+            # Covenant perfected — distance eliminated
+            self.distance.state.covenant_strength = 1.0
+            self.distance.state.divine_nearness = 1.0
+            self.distance.state.intimacy_level = 1.0
+            self.distance.state.active_distance = 0.0
+            self.distance.covenant_penalty = 0.0
+            self.distance.fragmentation = 0.0
+            self.distance.foreign_pressure = 0.0
+
+            # Divine engagement permanent
+            self.engagement.state.presence_level = 1.0
+            self.engagement.state.grace_space = 1.0
+
+            events.append({
+                "tick": self.tick,
+                "type": "new_creation",
+                "agents_restored": len(self.population.agents),
+                "curses_resolved": resolved_curses,
+                "description": (
+                    f"New creation — heaven and earth converge permanently. "
+                    f"{len(self.population.agents)} agents restored. "
+                    f"Entropy source sealed. Corruption cannot return. "
+                    f"What the flood reset, the temple localized, and "
+                    f"incarnation initiated — consummation completes. "
+                    f"The cycle ends not by escape but by fulfillment."),
+                "parallel": "new_creation_pattern"
+            })
+
+        return events
+
+    def _step_new_creation(self):
+        """Maintain new creation state — entropy permanently defeated.
+
+        After consummation, the simulation continues ticking but in a
+        qualitatively different state. No entropy, no corruption, no decay.
+        The convergence is permanent.
+        """
+        realm = self.environment.realm
+        realm.corruption_level = 0.0
+        realm.heavenly_influence = 1.0
+        realm.underworld_pressure = 0.0
+        realm.natural_vitality = 1.0
+        realm.chaos_seepage = 0.0
+
+        # All agents remain fully alive and vital
+        for agent in self.population.agents:
+            if not agent.alive:
+                agent.alive = True
+            agent.state.spiritual_vitality = 1.0
+            agent.state.rebellion = 0.0
+
+        # Covenant and engagement remain perfect
+        self.distance.state.covenant_strength = 1.0
+        self.distance.state.active_distance = 0.0
+        self.engagement.state.presence_level = 1.0
+
     def _check_atonement_conditions(self, pop: dict, dist: dict, eng: dict) -> bool:
         """Atonement emerges when covenant is active and distance is significant."""
         return (pop["remnant_fraction"] > 0.1 and
@@ -1076,7 +1344,14 @@ class Simulation:
             "schism_count": self._schism_count,
             "schism_pressure": round(self._schism_pressure, 4),
             "accumulated_curses": curse_summary,
-            "scc_key_question": ("RESOLVED — cycle broken from within"
-                                if final_env["cycle_broken"]
-                                else "UNRESOLVED — cycles continue"),
+            "consummated": self._consummated,
+            "parousia_tick": self._parousia_tick if self._consummated else None,
+            "cup_of_wrath": round(self._apostasy_level, 4),
+            "scc_key_question": (
+                "CONSUMMATED — curses resolved, entropy defeated, "
+                "heaven-earth convergence permanent"
+                if self._consummated
+                else ("RESOLVED — cycle broken from within"
+                      if final_env["cycle_broken"]
+                      else "UNRESOLVED — cycles continue")),
         }

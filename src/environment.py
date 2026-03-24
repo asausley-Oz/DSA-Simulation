@@ -58,6 +58,7 @@ class CycleCurse:
     resistance_penalty: float = 0.0    # reduces effectiveness of resistance
     fragmentation: float = 0.0         # population unity penalty
     foreign_pressure: float = 0.0      # constant external oppression
+    resolved: bool = False             # resolved at consummation
 
 
 @dataclass
