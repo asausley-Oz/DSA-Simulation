@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """
-DSA Simulation Runner
+DSA Simulation Runner — CDT Biblical Arc
 
-Run the Divine Sovereign Agency simulation and generate output.
+Run the Divine Sovereign Agency simulation through the CDT biblical timeline.
 
 Usage:
-    python run_simulation.py                    # default run
-    python run_simulation.py --ticks 1000       # longer run
+    python run_simulation.py                    # default 1000-tick run
+    python run_simulation.py --ticks 1500       # longer run
     python run_simulation.py --seed 123         # different seed
     python run_simulation.py --no-plots         # text output only
 """
 
 import argparse
-import sys
 from pathlib import Path
 
 from src.simulation import Simulation, SimulationConfig
@@ -22,9 +21,9 @@ from src.visualization import (
 
 
 def main():
-    parser = argparse.ArgumentParser(description="DSA Simulation Runner")
-    parser.add_argument("--ticks", type=int, default=500,
-                        help="Number of simulation ticks (default: 500)")
+    parser = argparse.ArgumentParser(description="DSA Simulation — CDT Biblical Arc")
+    parser.add_argument("--ticks", type=int, default=1000,
+                        help="Number of simulation ticks (default: 1000)")
     parser.add_argument("--population", type=int, default=100,
                         help="Population size (default: 100)")
     parser.add_argument("--seed", type=int, default=42,
@@ -35,8 +34,6 @@ def main():
                         help="Output directory for plots (default: output)")
     parser.add_argument("--no-incarnation", action="store_true",
                         help="Disable incarnational cycle-breaking")
-    parser.add_argument("--remnant-tick", type=int, default=100,
-                        help="Tick at which remnant is called out (default: 100)")
     args = parser.parse_args()
 
     config = SimulationConfig(
@@ -44,10 +41,9 @@ def main():
         population_size=args.population,
         seed=args.seed,
         enable_incarnation=not args.no_incarnation,
-        remnant_injection_tick=args.remnant_tick,
     )
 
-    print(f"Running DSA Simulation: {config.num_ticks} ticks, "
+    print(f"Running DSA Simulation (CDT Biblical Arc): {config.num_ticks} ticks, "
           f"{config.population_size} agents, seed={config.seed}")
     print()
 

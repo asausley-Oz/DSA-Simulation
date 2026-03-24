@@ -171,7 +171,10 @@ def _plot_dashboard(df: pd.DataFrame, events: pd.DataFrame,
                     out: Path, prefix: str) -> str:
     """Combined dashboard with all key metrics."""
     fig, axes = plt.subplots(4, 1, figsize=(16, 14), sharex=True)
-    fig.suptitle(f"{prefix}DSA Simulation Dashboard", fontsize=16, fontweight="bold")
+    fig.suptitle(f"{prefix}DSA Simulation — CDT Biblical Arc", fontsize=16, fontweight="bold")
+
+    # Mark era boundaries on all axes
+    _mark_era_boundaries(axes, events)
 
     # Row 1: SCC Environment
     ax = axes[0]
@@ -217,6 +220,22 @@ def _plot_dashboard(df: pd.DataFrame, events: pd.DataFrame,
     fig.savefig(path, dpi=150)
     plt.close(fig)
     return path
+
+
+def _mark_era_boundaries(axes, events_df: pd.DataFrame):
+    """Mark era transitions on all axes with labeled vertical lines."""
+    if events_df.empty or "type" not in events_df.columns:
+        return
+    era_events = events_df[events_df["type"] == "era_transition"]
+    for _, row in era_events.iterrows():
+        era_name = row.get("era", "")
+        for ax in axes:
+            ax.axvline(x=row["tick"], color="black", alpha=0.25, linewidth=0.6, linestyle="-")
+        # Label on top axis only
+        if len(axes) > 0 and era_name:
+            short = era_name[:12]
+            axes[0].text(row["tick"] + 2, 1.0, short, fontsize=5,
+                        rotation=45, va="top", alpha=0.6)
 
 
 def _mark_events(ax, events_df: pd.DataFrame, event_types: List[str]):
@@ -296,6 +315,9 @@ def _event_marker(etype: str) -> str:
         "divine_grief": "[GRIEF]",
         "intimacy_advance": "[INTIMACY]",
         "harvest_ready": "[HARVEST]",
+        "era_transition": "[ERA]",
+        "judges_phase": "[JUDGES]",
+        "spirit_indwelling": "[SPIRIT]",
     }
     return markers.get(etype, f"[{etype.upper()}]")
 
@@ -307,7 +329,9 @@ def print_summary(summary: dict):
     print("=" * 70)
     print(f"  Total ticks:          {summary['total_ticks']}")
     print(f"  Total events:         {summary['total_events']}")
-    print(f"  Cycles completed:     {summary['cycles_completed']}")
+    print(f"  Final era:            {summary.get('final_era', 'N/A')}")
+    print(f"  Judges cycles:        {summary.get('judges_cycles', 0)}")
+    print(f"  SCC cycles completed: {summary['cycles_completed']}")
     print(f"  Intimacy milestones:  {summary['intimacy_milestones']}")
     print()
     print(f"  Final corruption:     {summary['final_corruption']:.4f}")
