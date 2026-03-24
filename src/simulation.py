@@ -69,8 +69,8 @@ class Simulation:
         # maximum corruption. When temple presence builds high enough
         # it triggers incarnation — God fully entering the convergence.
         self._temple_presence = 0.0
-        self._temple_built = False
-        self._temple_destroyed = False
+        self._temple_number = 0       # which temple we're on (0 = none yet)
+        self._temple_standing = False  # is a temple currently standing?
 
         # === Schism Mechanics ===
         # Cities amplify everything. Post-resurrection, the gospel spreads
@@ -495,22 +495,28 @@ class Simulation:
                      covenant * 0.3 +
                      engagement * 0.2 +
                      density * 0.1 +
-                     remnant * 0.1) * 0.002
+                     remnant * 0.1) * 0.003
 
             # Net change: worship growth minus city corruption drag
             net = growth - total_drag
             self._temple_presence = np.clip(
                 self._temple_presence + net, 0.0, 1.0)
 
-            # Temple built event — threshold for first construction
-            if not self._temple_built and self._temple_presence > 0.3:
-                self._temple_built = True
+            # Temple built event — fires when presence crosses 0.2
+            # A modest temple is still a real convergence point.
+            if not self._temple_standing and self._temple_presence > 0.2:
+                self._temple_number += 1
+                self._temple_standing = True
+                ordinal = {1: "First", 2: "Second", 3: "Third"}.get(
+                    self._temple_number, f"Temple #{self._temple_number}")
                 events.append({
                     "tick": self.tick,
                     "type": "temple_built",
+                    "temple_number": self._temple_number,
                     "presence": self._temple_presence,
-                    "description": ("Temple established — heaven-earth convergence point. "
-                                    "Localized entropy drain active in the city."),
+                    "description": (f"{ordinal} temple established — heaven-earth "
+                                    f"convergence point. Localized entropy drain "
+                                    f"active in the city."),
                     "parallel": "temple_pattern"
                 })
         else:
@@ -518,15 +524,18 @@ class Simulation:
             self._temple_presence = max(0.0,
                 self._temple_presence - 0.002 - total_drag)
 
-            # Temple destruction — if it was built but presence collapses
-            if (self._temple_built and not self._temple_destroyed and
-                    self._temple_presence < 0.1):
-                self._temple_destroyed = True
+            # Temple destruction — standing temple collapses
+            if self._temple_standing and self._temple_presence < 0.1:
+                self._temple_standing = False
+                ordinal = {1: "First", 2: "Second", 3: "Third"}.get(
+                    self._temple_number, f"Temple #{self._temple_number}")
                 events.append({
                     "tick": self.tick,
                     "type": "temple_destroyed",
-                    "description": ("Temple destroyed — convergence point lost. "
-                                    "The city's corruption consumed the sacred space."),
+                    "temple_number": self._temple_number,
+                    "description": (f"{ordinal} temple destroyed — convergence point "
+                                    f"lost. The city's corruption consumed the "
+                                    f"sacred space."),
                     "parallel": "exile_destruction_pattern"
                 })
 
