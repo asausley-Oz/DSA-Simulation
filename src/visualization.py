@@ -288,7 +288,7 @@ def _event_marker(etype: str) -> str:
         "calling": "[CALL]",
         "remnant_emergence": "[REMNANT]",
         "spiritual_death": "[DEATH]",
-        "delusion_dominance": "[DELUSION]",
+        "delusion_dominance": "[VAMPHORIC]",
         "curse_paradox": "[PARADOX]",
         "tabernacle_moment": "[TABERNACLE]",
         "divine_incursion": "[THEOPHANY]",

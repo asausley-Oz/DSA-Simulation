@@ -161,13 +161,15 @@ class Environment:
         self.realm.underworld_pressure = min(1.0,
             self.realm.underworld_pressure * 0.95 + self.realm.chaos_seepage * 0.15)
 
-        # === Corruption Accumulation ===
+        # === Corruption Accumulation (Vamphoric Systems) ===
         # CDT: corruption is cumulative — each act adds to the distance
-        # Corruption has a base rate — the curse never fully lifts on its own
+        # Vamphoric Systems: parasitic structures that drain life while mimicking it
+        # The drain is built into the environment — not announced, not visible from within
         corruption_input = (self.realm.chaos_seepage * 0.3 +
                            (1.0 - population_faithfulness) * 0.25 +
                            self.realm.underworld_pressure * 0.15 +
                            0.02)  # base corruption — the post-Fall world is cursed
+        # Exposure breaks the system — divine engagement + faithfulness resist
         corruption_resistance = (self.realm.heavenly_influence * 0.2 +
                                 population_faithfulness * 0.15 +
                                 divine_engagement * 0.08)

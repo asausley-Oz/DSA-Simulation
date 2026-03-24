@@ -28,10 +28,10 @@ class CovenantState:
     curse_weight: float = 0.0              # weight of accumulated curses
     blessing_flow: float = 1.0             # flow of covenant blessings
 
-    # === Spiritual State ===
+    # === Spiritual State (Anti-Life Delusion) ===
     spiritual_vitality: float = 1.0        # 0 = spiritually dead, 1 = fully alive
-    delusion_level: float = 0.0            # how obscured awareness has become
-    awareness_of_condition: float = 1.0    # self-knowledge of spiritual state
+    delusion_level: float = 0.0            # Anti-Life Delusion: conceals and accelerates dying
+    awareness_of_condition: float = 1.0    # awareness is the precondition of turning
 
     # === God's Counter-Movement ===
     divine_nearness: float = 0.5           # CDT: God's movement toward humanity
@@ -243,14 +243,15 @@ class DistanceEngine:
                 "parallel": "death_pattern"
             })
 
-        # --- Delusion Takeover ---
+        # --- Vamphoric Dominance (Anti-Life Delusion) ---
+        # The drain runs undetected, the fork has split attention completely
         if (s.delusion_level > 0.8 and s.awareness_of_condition < 0.15 and
                 self._cooldown_ok("delusion_dominance", 50)):
             self._record_event("delusion_dominance")
             events.append({
                 "tick": self.tick,
                 "type": "delusion_dominance",
-                "description": "Delusion dominates — awareness of condition nearly lost",
+                "description": "Vamphoric systems dominate — awareness of condition nearly lost",
                 "parallel": "hardening_pattern"
             })
 

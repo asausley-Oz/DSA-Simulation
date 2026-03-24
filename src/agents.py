@@ -86,10 +86,12 @@ class Agent:
         faith_growth = (divine_engagement * 0.03 * t.faith_capacity +
                        s.awareness * 0.02 +
                        covenant_health * 0.01)
-        faith_decay = (env_corruption * 0.02 +
-                      s.delusion_level * 0.03 +
-                      s.rebellion * 0.02)
-        s.faith = np.clip(s.faith + faith_growth - faith_decay + noise * 0.5, 0.0, 1.0)
+        # Vamphoric Systems: THE FORK — attention split away from the source of life
+        # The fork points toward something almost right, mistaken for the real thing
+        vamphoric_fork = (env_corruption * 0.02 +
+                         s.delusion_level * 0.03 +
+                         s.rebellion * 0.02)
+        s.faith = np.clip(s.faith + faith_growth - vamphoric_fork + noise * 0.5, 0.0, 1.0)
 
         # === Faithfulness ===
         # Tracks faith with behavioral lag
@@ -114,21 +116,26 @@ class Agent:
             rebellion_floor, 1.0)
 
         # === Spiritual Vitality ===
-        # CDT: born alive, dying through rebellion — a process
+        # Anti-Life Delusion: spiritual death is an active, ongoing process
+        # Vamphoric Systems: THE DRAIN — life extracted while appearing beneficial
         vitality_nourish = (env_heavenly * 0.02 +
                            s.faith * 0.03 +
                            divine_engagement * 0.02)
-        vitality_drain = (s.rebellion * 0.03 +
-                         env_corruption * 0.02 +
-                         s.delusion_level * 0.02)
+        # The drain operates through corruption, rebellion, and delusion
+        # It is built into the structure — not announced, not visible from within
+        vamphoric_drain = (s.rebellion * 0.03 +
+                          env_corruption * 0.025 +
+                          s.delusion_level * 0.02)
         s.spiritual_vitality = np.clip(
-            s.spiritual_vitality + vitality_nourish - vitality_drain, 0.0, 1.0)
+            s.spiritual_vitality + vitality_nourish - vamphoric_drain, 0.0, 1.0)
 
         # === Delusion ===
-        # CDT: embraced by humanity, enticed from spiritual realm
+        # Anti-Life Delusion: embraced by humanity, enticed from spiritual realm
+        # Delusion keeps the drain running undetected — awareness is the precondition of turning
         delusion_growth = (env_corruption * 0.015 +
                           s.rebellion * 0.01 +
                           (1.0 - t.awareness_sensitivity) * 0.005)
+        # Exposure breaks delusion — divine engagement is the greater glory
         delusion_shrink = (divine_engagement * 0.02 +
                           s.faith * 0.015 +
                           t.resilience * 0.005)
@@ -136,6 +143,7 @@ class Agent:
             s.delusion_level + delusion_growth - delusion_shrink, 0.0, 1.0)
 
         # Awareness inversely tracks delusion
+        # A person who clearly sees they are dying is halfway toward the gospel
         s.awareness = np.clip(
             t.awareness_sensitivity * (1.0 - s.delusion_level * 0.8), 0.05, 1.0)
 
