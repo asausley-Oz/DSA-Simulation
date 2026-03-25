@@ -105,6 +105,35 @@ class Simulation:
         self._schism_count = 0
         self._last_schism_tick = -200
 
+        # === Modern Age Environmental Effects ===
+        # Three phases of degradation that emerge between the Great Schism
+        # and consummation. No timelines — thresholds only.
+        #
+        # Phase 1 — Enlightenment/Secularization:
+        #   awareness_sensitivity degrades generationally. Not individual
+        #   delusion (that's already modeled) but the cultural CAPACITY
+        #   to perceive spiritual reality eroding across generations.
+        #   The trait itself degrades — structural, not individual.
+        #
+        # Phase 2 — Simulacra:
+        #   Agents interact with representations instead of reality.
+        #   Faith/labor operate on copies. The vamphoric drain runs
+        #   undetected because the copies feel real. Baudrillard's
+        #   simulation — the map precedes the territory.
+        #
+        # Phase 3 — Digital Container:
+        #   Network effects multiply the vamphoric drain systemically.
+        #   The drain becomes ambient, constant, inescapable. Not a
+        #   choice to engage but an environment that extracts. Density
+        #   without proximity. Connection without covenant.
+        self._modern_phase = 0          # 0=pre, 1=enlightenment, 2=simulacra, 3=digital
+        self._simulacra_level = 0.0     # environmental simulacra saturation (0-1)
+        self._digital_amplifier = 0.0   # network-effect vamphoric multiplier (0-1)
+        self._awareness_erosion = 0.0   # cumulative generational awareness trait loss
+        self._phase1_tick = 0           # when phase 1 triggered
+        self._phase2_tick = 0           # when phase 2 triggered
+        self._phase3_tick = 0           # when phase 3 triggered
+
         # === Eschatological State ===
         # After the Great Schism, entropy overwhelms the post-grace church.
         # The final apostasy builds as corruption returns to maximum.
@@ -203,6 +232,10 @@ class Simulation:
                 "temple_presence": 1.0,
                 "schism_pressure": 0.0,
                 "schism_count": self._schism_count,
+                "modern_phase": 0,
+                "simulacra_level": 0.0,
+                "digital_amplifier": 0.0,
+                "awareness_erosion": 0.0,
                 "apostasy_level": 0.0,
                 "consummated": True,
                 "event_count": 0,
@@ -245,6 +278,8 @@ class Simulation:
             divine_engagement=eng_state["presence_level"],
             grace_space=eng_state["grace_space"],
             covenant_health=dist_state["covenant_health"],
+            simulacra_level=self._simulacra_level,
+            digital_amplifier=self._digital_amplifier,
         )
 
         # === Step Engagement (DSA) ===
@@ -384,6 +419,12 @@ class Simulation:
         # === City Density Effects & Schism Detection ===
         tick_events.extend(self._step_city_schism(pop_signals, env_state))
 
+        # === Modern Age Environmental Effects ===
+        # Three-phase degradation between Great Schism and consummation.
+        # Phase transitions emerge from thresholds, not timelines.
+        if self._great_schism_fired and not self._consummated:
+            tick_events.extend(self._step_modern_age(pop_signals, env_state))
+
         # === Eschatological Consummation ===
         # After the Great Schism, apostasy builds toward final darkness.
         # When the remnant is nearly overwhelmed — the return.
@@ -413,6 +454,10 @@ class Simulation:
             "temple_presence": round(self._temple_presence, 4),
             "schism_pressure": round(self._schism_pressure, 4),
             "schism_count": self._schism_count,
+            "modern_phase": self._modern_phase,
+            "simulacra_level": round(self._simulacra_level, 4),
+            "digital_amplifier": round(self._digital_amplifier, 4),
+            "awareness_erosion": round(self._awareness_erosion, 4),
             "apostasy_level": round(self._apostasy_level, 4),
             "consummated": self._consummated,
             "event_count": len(tick_events),
@@ -457,6 +502,29 @@ class Simulation:
             agent.state.faith = np.clip(self.rng.normal(0.15, 0.1), 0.02, 0.4)
             agent.state.rebellion = np.clip(self.rng.normal(0.35, 0.15), 0.1, 0.7)
             agent.state.delusion_level = np.clip(self.rng.normal(0.25, 0.1), 0.05, 0.5)
+
+            # === Modern Age: Generational Awareness Erosion ===
+            # Phase 1+ degrades the awareness_sensitivity TRAIT of newborns.
+            # This is structural: the cultural water new generations are
+            # born into has less capacity for spiritual perception.
+            # It's not that individuals choose blindness — they are born
+            # into a world where the aperture is already narrowed.
+            # Indwelt parents partially buffer this (covenant community
+            # as counter-cultural formation), but cannot fully reverse
+            # a cultural tide.
+            if self._awareness_erosion > 0:
+                agent.traits.awareness_sensitivity = np.clip(
+                    agent.traits.awareness_sensitivity - self._awareness_erosion,
+                    0.05, 0.95)
+                # Awareness state tracks the degraded trait
+                agent.state.awareness = agent.traits.awareness_sensitivity * 0.6
+
+            # Phase 2+: newborns start with baseline simulacra exposure —
+            # they are born into a world of representations
+            if self._modern_phase >= 2:
+                agent.state.simulacra_exposure = np.clip(
+                    self._simulacra_level * 0.3, 0.0, 0.5)
+
             agents.append(agent)
 
         self.population.size = len(agents)
@@ -1100,6 +1168,220 @@ class Simulation:
 
         return events
 
+    def _step_modern_age(self, pop: dict, env: dict) -> List[dict]:
+        """Three-phase modern age environmental effects.
+
+        These phases model the post-Schism degradation of humanity's
+        capacity to perceive, engage with, and resist the vamphoric
+        system. Each phase emerges from threshold conditions — no
+        timelines, no calendars. The phases compound: Phase 2 requires
+        Phase 1, Phase 3 requires Phase 2.
+
+        Phase 1 — Enlightenment/Secularization:
+            The cultural capacity to perceive spiritual reality erodes
+            across generations. Not individual delusion (already modeled)
+            but the awareness_sensitivity TRAIT degrading in newborns.
+            The Enlightenment didn't make individuals more deluded —
+            it changed the cultural water so that new generations are
+            born with lower capacity to perceive. The rationalist
+            framework is itself a simulacrum of wisdom: it appears to
+            illuminate but actually narrows the aperture of perception.
+
+        Phase 2 — Simulacra:
+            When awareness has eroded enough, agents begin interacting
+            with representations instead of reality. The map replaces
+            the territory. Faith becomes "faith in faith." Worship
+            becomes performance. Divine labor becomes productivity.
+            The vamphoric drain runs perfectly because the copies
+            feel more real than the originals. Baudrillard's insight:
+            the simulation precedes and determines the real.
+
+        Phase 3 — Digital Container:
+            When simulacra saturation is high AND city density is high,
+            network effects create a container that multiplies the
+            vamphoric drain systemically. The drain becomes ambient —
+            not a choice to engage but an environment that extracts.
+            Density without proximity. Connection without covenant.
+            Every agent is constantly drained through the network
+            whether they choose it or not. The container is inescapable
+            because it IS the environment.
+
+        The three phases accelerate the cup of wrath by degrading
+        the very capacity that would enable resistance.
+        """
+        events = []
+        corruption = env["corruption_level"]
+        density = pop["city_density"]
+        avg_awareness_sens = pop["avg_awareness_sensitivity"]
+        avg_delusion = pop["avg_delusion"]
+        avg_simulacra = pop["avg_simulacra_exposure"]
+        remnant = pop["remnant_fraction"]
+
+        # ================================================================
+        # PHASE 1 — ENLIGHTENMENT / SECULARIZATION
+        # Threshold: post-schism + corruption above 0.5 + avg delusion > 0.4
+        # Effect: awareness_sensitivity trait degrades generationally
+        # ================================================================
+        if self._modern_phase < 1:
+            # Phase 1 triggers when the post-schism world has enough
+            # corruption that the cultural capacity for spiritual
+            # perception begins structurally eroding. This is NOT
+            # about individual delusion — it's about the cultural
+            # environment. The Enlightenment didn't need a deluded
+            # population to begin; it emerged from corruption in the
+            # institutional church (the schism itself) creating a
+            # rationalist counter-movement. Corruption in the sacred
+            # institution PRODUCES secularization as reaction.
+            if (corruption > 0.5 and
+                    not self._grace_period_active):
+                self._modern_phase = 1
+                self._phase1_tick = self.tick
+                events.append({
+                    "tick": self.tick,
+                    "type": "modern_phase_1",
+                    "corruption": round(corruption, 4),
+                    "avg_delusion": round(avg_delusion, 4),
+                    "description": (
+                        "Phase 1: Enlightenment/Secularization begins. "
+                        "The cultural capacity to perceive spiritual reality "
+                        "begins eroding generationally. Not individual blindness "
+                        "but structural narrowing of the aperture. "
+                        "The rationalist framework appears to illuminate "
+                        "but narrows perception to the material."),
+                    "parallel": "enlightenment_pattern"
+                })
+
+        if self._modern_phase >= 1:
+            # Awareness erosion accumulates each tick — slow but relentless.
+            # The erosion rate scales with corruption:
+            # a more corrupt society erodes faster.
+            # Remnant presence slows (but cannot stop) the erosion —
+            # salt and light preserve but cannot reverse a cultural tide.
+            erosion_rate = 0.001 * (1.0 + corruption * 0.5)
+            remnant_brake = remnant * 0.3  # remnant slows erosion
+            net_erosion = erosion_rate * (1.0 - remnant_brake)
+            self._awareness_erosion = min(0.6, self._awareness_erosion + net_erosion)
+
+            # The cultural environment degrades LIVING agents too —
+            # not just newborns. The frog in the pot. Everyone's capacity
+            # to perceive spiritual reality narrows as the culture shifts.
+            # Indwelt agents resist (the Spirit gives discernment) but
+            # are not immune — they breathe the same cultural air.
+            # This is a TRAIT degradation, not a state change. The agent's
+            # fundamental capacity is being eroded by the environment.
+            for agent in self.population.agents:
+                if agent.alive:
+                    resist = 0.5 if agent.indwelt else 0.1
+                    trait_loss = net_erosion * (1.0 - resist)
+                    agent.traits.awareness_sensitivity = max(
+                        0.05, agent.traits.awareness_sensitivity - trait_loss)
+
+        # ================================================================
+        # PHASE 2 — SIMULACRA
+        # Threshold: Phase 1 active + avg awareness_sensitivity < 0.35
+        #            + corruption > 0.55
+        # Effect: simulacra_level rises, interposing between agents
+        #         and reality
+        # ================================================================
+        if self._modern_phase == 1:
+            # Phase 2 triggers when generational awareness erosion has
+            # degraded the population's capacity enough that the culture
+            # shifts from perceiving reality to consuming representations.
+            if (avg_awareness_sens < 0.5 and corruption > 0.55):
+                self._modern_phase = 2
+                self._phase2_tick = self.tick
+                events.append({
+                    "tick": self.tick,
+                    "type": "modern_phase_2",
+                    "avg_awareness_sensitivity": round(avg_awareness_sens, 4),
+                    "corruption": round(corruption, 4),
+                    "description": (
+                        "Phase 2: Simulacra emerges. Agents begin interacting "
+                        "with representations instead of reality. The map "
+                        "replaces the territory. Faith becomes 'faith in faith.' "
+                        "Worship becomes performance. The vamphoric drain runs "
+                        "undetected because the copies feel real."),
+                    "parallel": "simulacra_pattern"
+                })
+
+        if self._modern_phase >= 2:
+            # Simulacra level rises as awareness continues to erode
+            # and corruption provides the substrate. The simulacra is
+            # self-reinforcing: lower awareness → more simulacra accepted
+            # → harder to perceive the original → lower awareness.
+            # Indwelt remnant agents provide some grounding in reality
+            # but cannot prevent the cultural saturation.
+            sim_growth = (self._awareness_erosion * 0.005 +
+                         corruption * 0.002 +
+                         avg_delusion * 0.001)
+            sim_resist = remnant * 0.001  # remnant grounds in reality
+            self._simulacra_level = np.clip(
+                self._simulacra_level + sim_growth - sim_resist, 0.0, 0.9)
+
+            # Simulacra feeds back into corruption — the copies generate
+            # their own entropy because they are disconnected from the
+            # life-source. Representation without reality is itself
+            # a form of corruption.
+            simulacra_entropy = self._simulacra_level * 0.003
+            self.environment.realm.corruption_level = min(
+                1.0, self.environment.realm.corruption_level + simulacra_entropy)
+
+        # ================================================================
+        # PHASE 3 — DIGITAL CONTAINER
+        # Threshold: Phase 2 active + simulacra > 0.4 + density > 0.6
+        # Effect: digital_amplifier rises, multiplying vamphoric drain
+        #         through network effects
+        # ================================================================
+        if self._modern_phase == 2:
+            # Phase 3 triggers when simulacra saturation is high enough
+            # AND awareness erosion is deep enough that the container
+            # becomes self-sustaining. The digital container doesn't
+            # require physical density — it creates VIRTUAL density.
+            # A small remnant in a sea of simulacra is still immersed.
+            # The network doesn't need bodies; it needs nodes. And
+            # every agent with simulacra exposure > 0 is a node.
+            if (self._simulacra_level > 0.2 and
+                    self._awareness_erosion > 0.15):
+                self._modern_phase = 3
+                self._phase3_tick = self.tick
+                events.append({
+                    "tick": self.tick,
+                    "type": "modern_phase_3",
+                    "simulacra_level": round(self._simulacra_level, 4),
+                    "city_density": round(density, 4),
+                    "description": (
+                        "Phase 3: Digital Container activates. Network effects "
+                        "multiply the vamphoric drain systemically. The drain "
+                        "becomes ambient — not a choice but an environment. "
+                        "Density without proximity. Connection without covenant. "
+                        "Every agent is drained through the network whether "
+                        "they choose it or not."),
+                    "parallel": "digital_container_pattern"
+                })
+
+        if self._modern_phase >= 3:
+            # Digital amplifier rises with simulacra and awareness erosion.
+            # The network effect is multiplicative: each connected node
+            # amplifies the drain on every other node. Physical density
+            # is irrelevant — the network creates its own virtual density.
+            # The amplifier can't exceed 1.0 — there's a ceiling to
+            # how much the network can extract per tick.
+            amp_growth = (self._simulacra_level * 0.003 +
+                         self._awareness_erosion * 0.002 +
+                         corruption * 0.001)
+            amp_resist = remnant * 0.001  # remnant communities as islands
+            self._digital_amplifier = np.clip(
+                self._digital_amplifier + amp_growth - amp_resist, 0.0, 1.0)
+
+            # The digital container accelerates awareness erosion —
+            # the network itself teaches agents to accept the mediated
+            # world as the real one. Children born into the container
+            # have never known unmediated reality.
+            self._awareness_erosion = min(
+                0.6, self._awareness_erosion + self._digital_amplifier * 0.00005)
+
+        return events
+
     def _step_consummation(self, pop: dict, env: dict, eng: dict) -> List[dict]:
         """Model the eschatological ending — the cup of wrath, parousia, new creation.
 
@@ -1162,6 +1444,40 @@ class Simulation:
                 ticks_post_grace = self.tick - (self._grace_start_tick + self._grace_duration)
                 time_factor = min(2.0, 1.0 + ticks_post_grace / 2000.0)
                 wrath_rate *= time_factor
+
+                # === Modern Age Modulation of Wrath ===
+                # The three phases change HOW the cup fills:
+                #
+                # Phase 1 (Enlightenment): The world stops recognizing
+                #   its own condition. The cup still fills but the
+                #   AWARENESS of the filling is suppressed. Wrath
+                #   accumulates more slowly because the cultural
+                #   mechanisms that would accelerate apostasy (recognition
+                #   of God → rejection) are themselves degraded.
+                #   You can't rebel against what you can't perceive.
+                #
+                # Phase 2 (Simulacra): The filling is further obscured
+                #   by representations. The cup appears half-full even
+                #   when it's nearly overflowing. But simulacra itself
+                #   adds a new channel of wrath — the substitution of
+                #   copies for reality IS apostasy, even if it doesn't
+                #   feel like rebellion.
+                #
+                # Phase 3 (Digital Container): The network effect
+                #   multiplies wrath accumulation. Every connected agent
+                #   contributes to the cup simultaneously. The slow
+                #   build of Phases 1-2 gives way to exponential filling.
+                if self._modern_phase == 1:
+                    # Slow burn — apostasy without awareness of apostasy
+                    wrath_rate *= 0.6
+                elif self._modern_phase == 2:
+                    # Simulacra: slightly faster than Phase 1 due to
+                    # substitution-as-apostasy, but still moderated
+                    wrath_rate *= (0.7 + self._simulacra_level * 0.3)
+                elif self._modern_phase == 3:
+                    # Digital container: network-accelerated wrath
+                    wrath_rate *= (1.0 + self._digital_amplifier * 1.5)
+
                 self._apostasy_level = min(1.0, self._apostasy_level + wrath_rate)
 
             # The cup of wrath event — when it crosses the visible threshold
@@ -1366,6 +1682,10 @@ class Simulation:
             "schism_count": self._schism_count,
             "schism_pressure": round(self._schism_pressure, 4),
             "accumulated_curses": curse_summary,
+            "modern_age_phase": self._modern_phase,
+            "simulacra_level": round(self._simulacra_level, 4),
+            "digital_amplifier": round(self._digital_amplifier, 4),
+            "awareness_erosion": round(self._awareness_erosion, 4),
             "consummated": self._consummated,
             "parousia_tick": self._parousia_tick if self._consummated else None,
             "cup_of_wrath": round(self._apostasy_level, 4),

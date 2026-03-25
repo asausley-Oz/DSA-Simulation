@@ -38,6 +38,8 @@ class AgentState:
     awareness: float = 0.7            # awareness of spiritual condition
     imaging_quality: float = 0.3      # how well they image God into the world
     divine_labor: float = 0.0         # participation in God's work
+    simulacra_exposure: float = 0.0   # how much the agent interacts with representations
+                                      # instead of reality (0 = direct, 1 = fully mediated)
 
 
 class Agent:
@@ -72,8 +74,17 @@ class Agent:
 
     def step(self, env_corruption: float, env_heavenly: float,
              divine_engagement: float, grace_space: float,
-             covenant_health: float) -> None:
-        """Update agent state for one tick based on environment."""
+             covenant_health: float,
+             simulacra_level: float = 0.0,
+             digital_amplifier: float = 0.0) -> None:
+        """Update agent state for one tick based on environment.
+
+        Args:
+            simulacra_level: Environmental simulacra saturation (0-1).
+                How much the culture mediates reality through representations.
+            digital_amplifier: Network-effect multiplier on vamphoric drain (0-1).
+                How much digital connectivity amplifies the drain.
+        """
         if not self.alive:
             return
 
@@ -89,18 +100,46 @@ class Agent:
         # But there is a power source that pre-incarnation agents lacked.
         spirit_factor = 1.4 if self.indwelt else 1.0
 
+        # === Simulacra Exposure ===
+        # The agent's individual exposure to simulacra tracks the
+        # environmental level, modulated by awareness_sensitivity.
+        # High awareness agents resist the substitution longer.
+        # Indwelt agents have partial resistance — the Spirit gives
+        # discernment to see through representations to reality.
+        # But even the indwelt are not immune — the cultural water
+        # they swim in is saturated with copies.
+        if simulacra_level > 0:
+            resistance = t.awareness_sensitivity * 0.4 + (0.3 if self.indwelt else 0.0)
+            exposure_pull = simulacra_level * (1.0 - resistance) * 0.02
+            exposure_decay = s.faith * 0.005 * spirit_factor  # faith grounds in reality
+            s.simulacra_exposure = np.clip(
+                s.simulacra_exposure + exposure_pull - exposure_decay, 0.0, 1.0)
+
+        # === Effective Divine Engagement ===
+        # Simulacra interposes between the agent and reality.
+        # An agent deep in simulacra experiences divine engagement
+        # through layers of representation — the signal degrades.
+        # They may FEEL engaged but are engaging with a copy.
+        # The Spirit can pierce through, but the cultural mediation
+        # attenuates what reaches the agent's actual perception.
+        effective_engagement = divine_engagement * (1.0 - s.simulacra_exposure * 0.6)
+
         # === Faith Dynamics ===
         # DSA: faith is native, real, and genuinely valued
         # Faith grows with divine engagement and awareness, shrinks with delusion
         # Spirit-indwelt agents have amplified faith growth
-        faith_growth = (divine_engagement * 0.03 * t.faith_capacity * spirit_factor +
+        # Simulacra degrades the engagement signal — faith grows slower
+        # when the agent is engaging with representations, not reality
+        faith_growth = (effective_engagement * 0.03 * t.faith_capacity * spirit_factor +
                        s.awareness * 0.02 +
                        covenant_health * 0.01)
         # Vamphoric Systems: THE FORK — attention split away from the source of life
         # The fork points toward something almost right, mistaken for the real thing
+        # Digital amplifier scales the fork — network effects multiply distraction
+        digital_fork_boost = 1.0 + digital_amplifier * 0.5
         vamphoric_fork = (env_corruption * 0.02 +
                          s.delusion_level * 0.03 +
-                         s.rebellion * 0.02)
+                         s.rebellion * 0.02) * digital_fork_boost
         s.faith = np.clip(s.faith + faith_growth - vamphoric_fork + noise * 0.5, 0.0, 1.0)
 
         # === Faithfulness ===
@@ -131,24 +170,38 @@ class Agent:
         # Vamphoric Systems: THE DRAIN — life extracted while appearing beneficial
         vitality_nourish = (env_heavenly * 0.02 +
                            s.faith * 0.03 * spirit_factor +
-                           divine_engagement * 0.02 * spirit_factor)
+                           effective_engagement * 0.02 * spirit_factor)
         # The drain operates through corruption, rebellion, and delusion
         # It is built into the structure — not announced, not visible from within
+        # Digital amplifier scales the drain — network effects mean the
+        # extraction is constant, ambient, and inescapable. The drain
+        # doesn't announce itself; it feels like connection, entertainment,
+        # productivity. But life is being extracted at scale.
+        digital_drain_boost = 1.0 + digital_amplifier * 0.4
         vamphoric_drain = (s.rebellion * 0.03 +
                           env_corruption * 0.025 +
-                          s.delusion_level * 0.02)
+                          s.delusion_level * 0.02) * digital_drain_boost
+        # Simulacra adds its own drain — engaging with copies costs vitality
+        # The agent doesn't notice because the copies feel real
+        simulacra_drain = s.simulacra_exposure * 0.01
         s.spiritual_vitality = np.clip(
-            s.spiritual_vitality + vitality_nourish - vamphoric_drain, 0.0, 1.0)
+            s.spiritual_vitality + vitality_nourish - vamphoric_drain - simulacra_drain,
+            0.0, 1.0)
 
         # === Delusion ===
         # Anti-Life Delusion: embraced by humanity, enticed from spiritual realm
         # Delusion keeps the drain running undetected — awareness is the precondition of turning
+        # Simulacra deepens delusion — the agent mistakes representations for
+        # reality, which IS delusion. The copy is accepted as the original.
         delusion_growth = (env_corruption * 0.015 +
                           s.rebellion * 0.01 +
-                          (1.0 - t.awareness_sensitivity) * 0.005)
+                          (1.0 - t.awareness_sensitivity) * 0.005 +
+                          s.simulacra_exposure * 0.008)
         # Exposure breaks delusion — divine engagement is the greater glory
         # Spirit-indwelt agents have enhanced capacity to see through delusion
-        delusion_shrink = (divine_engagement * 0.02 * spirit_factor +
+        # But simulacra attenuates the breaking power — the greater glory
+        # is mediated through copies, losing its shock value
+        delusion_shrink = (effective_engagement * 0.02 * spirit_factor +
                           s.faith * 0.015 * spirit_factor +
                           t.resilience * 0.005)
 
@@ -215,11 +268,15 @@ class Population:
 
     def step(self, env_corruption: float, env_heavenly: float,
              divine_engagement: float, grace_space: float,
-             covenant_health: float) -> dict:
+             covenant_health: float,
+             simulacra_level: float = 0.0,
+             digital_amplifier: float = 0.0) -> dict:
         """Step all agents and return aggregate signals."""
         for agent in self.agents:
             agent.step(env_corruption, env_heavenly, divine_engagement,
-                      grace_space, covenant_health)
+                      grace_space, covenant_health,
+                      simulacra_level=simulacra_level,
+                      digital_amplifier=digital_amplifier)
 
         alive = [a for a in self.agents if a.alive]
         if not alive:
@@ -249,6 +306,8 @@ class Population:
             "avg_delusion": sum(a.state.delusion_level for a in alive) / n,
             "avg_imaging": sum(a.state.imaging_quality for a in alive) / n,
             "avg_divine_labor": sum(a.state.divine_labor for a in alive) / n,
+            "avg_simulacra_exposure": sum(a.state.simulacra_exposure for a in alive) / n,
+            "avg_awareness_sensitivity": sum(a.traits.awareness_sensitivity for a in alive) / n,
             "alive_count": n,
             "dead_count": self.size - n,
             "city_density": density,
@@ -264,6 +323,8 @@ class Population:
             "avg_delusion": 1.0,
             "avg_imaging": 0.0,
             "avg_divine_labor": 0.0,
+            "avg_simulacra_exposure": 1.0,
+            "avg_awareness_sensitivity": 0.0,
             "alive_count": 0,
             "dead_count": self.size,
             "city_density": 0.0,

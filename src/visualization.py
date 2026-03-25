@@ -170,7 +170,11 @@ def _plot_population(df: pd.DataFrame, events: pd.DataFrame,
 def _plot_dashboard(df: pd.DataFrame, events: pd.DataFrame,
                     out: Path, prefix: str) -> str:
     """Combined dashboard with all key metrics."""
-    fig, axes = plt.subplots(4, 1, figsize=(16, 14), sharex=True)
+    # Check if modern age data exists
+    has_modern = "modern_phase" in df.columns and df["modern_phase"].max() > 0
+    n_rows = 5 if has_modern else 4
+
+    fig, axes = plt.subplots(n_rows, 1, figsize=(16, 3.5 * n_rows), sharex=True)
     fig.suptitle(f"{prefix}DSA Simulation — Entropy-Driven Dynamics", fontsize=16, fontweight="bold")
 
     # Row 1: SCC Environment
@@ -208,9 +212,28 @@ def _plot_dashboard(df: pd.DataFrame, events: pd.DataFrame,
     ax.plot(df["tick"], df["pop_population_rebellion"], color="red", linewidth=1.5)
     ax.plot(df["tick"], df["pop_remnant_fraction"], color="gold", linewidth=1.5)
     ax.set_ylabel("Pop")
-    ax.set_xlabel("Tick")
+    if not has_modern:
+        ax.set_xlabel("Tick")
     ax.set_ylim(0, 1.05)
     _mark_events(ax, events, ["calling", "remnant_emergence"])
+
+    # Row 5: Modern Age Environmental Effects (if present)
+    if has_modern:
+        ax = axes[4]
+        ax.plot(df["tick"], df["simulacra_level"], color="magenta", linewidth=1.5,
+                label="Simulacra")
+        ax.plot(df["tick"], df["digital_amplifier"], color="cyan", linewidth=1.5,
+                label="Digital Amplifier")
+        ax.plot(df["tick"], df["awareness_erosion"], color="orange", linewidth=1.5,
+                label="Awareness Erosion")
+        ax.plot(df["tick"], df["apostasy_level"], color="darkred", linewidth=1.5,
+                linestyle="--", label="Apostasy")
+        ax.set_ylabel("Modern")
+        ax.set_xlabel("Tick")
+        ax.set_ylim(0, 1.05)
+        ax.legend(loc="upper left", fontsize=7)
+        _mark_events(ax, events, ["modern_phase_1", "modern_phase_2",
+                                   "modern_phase_3", "great_schism", "parousia"])
 
     plt.tight_layout()
     path = str(out / "dashboard.png")
@@ -316,6 +339,9 @@ def _event_marker(etype: str) -> str:
         "judges_phase": "[JUDGES]",
         "spirit_indwelling": "[SPIRIT]",
         "great_schism": "[SCHISM]",
+        "modern_phase_1": "[ENLIGHTENMENT]",
+        "modern_phase_2": "[SIMULACRA]",
+        "modern_phase_3": "[DIGITAL]",
         "cup_of_wrath": "[WRATH]",
         "parousia": "[PAROUSIA]",
         "new_creation": "[NEW CREATION]",
@@ -344,6 +370,12 @@ def print_summary(summary: dict):
     print(f"  Final presence:       {summary['final_presence']:.4f}")
     print(f"  Final remnant:        {summary['final_remnant']:.4f}")
     print()
+    if summary.get("modern_age_phase", 0) > 0:
+        print(f"  Modern age phase:     {summary['modern_age_phase']}")
+        print(f"  Simulacra level:      {summary.get('simulacra_level', 0):.4f}")
+        print(f"  Digital amplifier:    {summary.get('digital_amplifier', 0):.4f}")
+        print(f"  Awareness erosion:    {summary.get('awareness_erosion', 0):.4f}")
+        print()
     print(f"  SCC Key Question:     {summary['scc_key_question']}")
     print()
 
