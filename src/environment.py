@@ -328,13 +328,27 @@ class Environment:
         target_heavenly = min(1.0, self.realm.life_force_flow * 0.7 + divine_engagement * 0.3)
         self.realm.heavenly_influence += (target_heavenly - self.realm.heavenly_influence) * 0.08
 
+        # === Curse Registry (used in multiple sections below) ===
+        curses = self.cycle_tracker.curse_registry
+
         # === Chaos Seepage ===
         # Underworld pressure exploits ANY gap in heavenly coverage
         heavenly_shield = self.realm.heavenly_influence * max(covenant_strength, 0.1)
         chaos_opportunity = max(0, 1.0 - heavenly_shield)
-        self.realm.chaos_seepage = (self.chaos_base_rate +
-                                    chaos_opportunity * 0.12 +
-                                    self.realm.corruption_level * 0.08)
+        chaos_rate = (self.chaos_base_rate +
+                      chaos_opportunity * 0.12 +
+                      self.realm.corruption_level * 0.08)
+
+        # === Firmament Effect ===
+        # In pristine creation, the firmament — the boundary between
+        # realms — is intact. Chaos seepage is dampened because the
+        # structural separation holds. After the first cycle failure,
+        # the firmament is permanently compromised. The waters above
+        # and below are no longer fully separated.
+        if curses.curse_count == 0:
+            chaos_rate *= 0.15
+
+        self.realm.chaos_seepage = chaos_rate
 
         # Underworld pressure builds — it ratchets up, slow to retreat
         self.realm.underworld_pressure = min(1.0,
@@ -361,8 +375,6 @@ class Environment:
         #   - Faithfulness (slows but cannot stop)
         #   - BUT resistance effectiveness is reduced by accumulated curses
 
-        curses = self.cycle_tracker.curse_registry
-
         # City density amplifies corruption feedback — the vamphoric
         # systems scale with density. More people, faster corruption spread.
         density_amplifier = 1.0 + city_density * 0.3
@@ -373,6 +385,24 @@ class Environment:
                         self.realm.chaos_seepage * 0.15 +
                         (1.0 - population_faithfulness) * 0.1 +
                         self.realm.corruption_level * self.corruption_feedback * density_amplifier)
+
+        # === Firmament Effect on Entropy ===
+        # Before any cycle has failed, the firmament holds — the
+        # "very good" creation has inherent resistance to entropy.
+        # The ground is not yet cursed. The natural order pushes back
+        # through structural integrity, not covenant. After the first
+        # failure, this resilience is permanently lost.
+        # "Cursed is the ground because of you."
+        #
+        # The firmament dampens BOTH the base entropy rate AND the
+        # corruption feedback loop. In pristine creation, corruption
+        # doesn't self-amplify as aggressively — the vamphoric systems
+        # haven't fully formed yet. They emerge as creation degrades.
+        if curses.curse_count == 0:
+            firmament_strength = self.realm.natural_vitality
+            # Scale down the total entropy input
+            firmament_dampening = max(0.08, 1.0 - 0.8 * firmament_strength)
+            entropy_input *= firmament_dampening
 
         # ONLY covenant + divine engagement TOGETHER resist entropy
         # Presence alone is not protective — DSA: space as grace
@@ -388,6 +418,25 @@ class Environment:
                              population_faithfulness * 0.015 * resistance_factor)
 
         net_entropy = entropy_input - entropy_resistance
+
+        # === Firmament Effect on Conversion Rate ===
+        # In pristine creation, corruption converts from entropy more
+        # slowly. The firmament absorbs entropy pressure — the structure
+        # holds. The Sethite line ("they began to call on the name of
+        # the LORD" — Gen 4:26) provides pre-covenant resistance.
+        # Not covenant, not engagement, but worship — a proto-faithfulness
+        # that slows the conversion. This gives the pre-flood world
+        # its long runway: 10 generations of 900-year lifespans.
+        # After the first failure, the firmament shatters and corruption
+        # converts at full rate.
+        if curses.curse_count == 0:
+            conversion_rate = 0.01  # firmament absorbs most entropy pressure
+            # As vitality drops, the firmament weakens — corruption
+            # converts faster as creation degrades
+            conversion_rate += (1.0 - self.realm.natural_vitality) * 0.02
+        else:
+            conversion_rate = 0.05  # post-curse: full conversion rate
+
         # CDT: pre-incarnation, entropy is only SLOWED, never stopped.
         # Even maximum covenant + divine engagement cannot reverse
         # the fundamental entropy of the cursed order. Only the
@@ -395,7 +444,7 @@ class Environment:
         if not self.cycle_tracker.cycle_broken:
             net_entropy = max(0.001, net_entropy)
         self.realm.corruption_level = np.clip(
-            self.realm.corruption_level + net_entropy * 0.05, 0.0, 1.0)
+            self.realm.corruption_level + net_entropy * conversion_rate, 0.0, 1.0)
 
         # === Natural Vitality ===
         vitality_support = (self.realm.life_force_flow * 0.35 +
