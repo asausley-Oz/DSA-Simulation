@@ -932,7 +932,8 @@ class Simulation:
         # the incarnation fires. God doesn't just visit the temple —
         # God becomes the temple. The convergence point becomes a person.
         curses = self.environment.cycle_tracker.curse_registry
-        if (not self.environment.cycle_tracker.cycle_broken and
+        if (self.config.enable_incarnation and
+                not self.environment.cycle_tracker.cycle_broken and
                 self._temple_presence > 0.55 and
                 curses.curse_count >= 1 and
                 engagement > 0.25):
