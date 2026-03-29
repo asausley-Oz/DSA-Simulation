@@ -326,6 +326,7 @@ class Simulation:
             covenant_strength=self.distance.state.covenant_strength,
             divine_engagement=divine_engagement,
             city_density=pop_signals["city_density"],
+            population_rebellion=pop_signals["population_rebellion"],
         )
         tick_events.extend(env_events)
 

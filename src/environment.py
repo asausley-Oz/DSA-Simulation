@@ -185,7 +185,16 @@ class CycleCurseRegistry:
 
 @dataclass
 class CycleTracker:
-    """Tracks the cyclical patterns SCC identifies across all traditions.
+    """Tracks the 8-step theological cycle:
+
+    1. GOD ESTABLISHES   — Life is given. The ground is set.
+    2. CALLED            — Humanity called to co-labor. Faithfulness holds.
+    3. DISOBEDIENCE      — Rebellion grows. Corruption feeds on itself.
+    4. GOD APPROACHES    — God draws near as humanity pulls away.
+    5. DRAWN AWAY        — Humanity continues to withdraw despite God's pursuit.
+    6. COVENANT BROKEN   — The covenant collapses. Structural failure.
+    7. CURSE ACCUMULATES — Permanent structural damage imposed.
+    8. GOD RE-ESTABLISHES — God begins again. But the curse remains.
 
     SCC: 'The systems are circular and cyclical. They do not resolve.
     They repeat. They spiral without terminus.'
@@ -196,80 +205,145 @@ class CycleTracker:
     """
     phase_history: List[str] = field(default_factory=list)
     cycle_count: int = 0
-    current_phase: str = "creation"
+    current_phase: str = "established"
     cycle_broken: bool = False
     curse_registry: CycleCurseRegistry = field(default_factory=CycleCurseRegistry)
     _phase_entered_tick: int = 0    # when we entered the current phase
     _tick: int = 0                  # current tick (updated each call)
 
     # Base thresholds — these get tightened by accumulated curses
-    _BASE_FLOURISHING: float = 0.65
-    _BASE_DECLINE: float = 0.45
-    _BASE_COLLAPSE: float = 0.2
-    _BASE_RESET: float = 0.1
+    _BASE_CALLED: float = 0.65
+    _BASE_DISOBEDIENCE: float = 0.45
+    _BASE_COVENANT_BROKEN: float = 0.2
+    _BASE_CURSE: float = 0.1
 
     @property
-    def FLOURISHING_THRESHOLD(self) -> float:
-        """Flourishing gets harder to reach with accumulated curses."""
-        return min(0.9, self._BASE_FLOURISHING + self.curse_registry.total_threshold_tightening)
+    def CALLED_THRESHOLD(self) -> float:
+        """Being called to co-labor gets harder with accumulated curses."""
+        return min(0.9, self._BASE_CALLED + self.curse_registry.total_threshold_tightening)
 
     @property
-    def DECLINE_THRESHOLD(self) -> float:
-        """Decline triggers earlier with accumulated curses."""
+    def DISOBEDIENCE_THRESHOLD(self) -> float:
+        """Disobedience triggers earlier with accumulated curses."""
         tightening = self.curse_registry.total_threshold_tightening
-        return min(0.7, self._BASE_DECLINE + tightening * 0.8)
+        return min(0.7, self._BASE_DISOBEDIENCE + tightening * 0.8)
 
     @property
-    def COLLAPSE_THRESHOLD(self) -> float:
-        """Collapse triggers earlier with accumulated curses."""
+    def COVENANT_BROKEN_THRESHOLD(self) -> float:
+        """Covenant breaks earlier with accumulated curses."""
         tightening = self.curse_registry.total_threshold_tightening
-        return min(0.4, self._BASE_COLLAPSE + tightening * 0.5)
+        return min(0.4, self._BASE_COVENANT_BROKEN + tightening * 0.5)
 
     @property
-    def RESET_THRESHOLD(self) -> float:
-        """Reset triggers earlier with accumulated curses."""
+    def CURSE_THRESHOLD(self) -> float:
+        """Curse accumulates earlier with accumulated curses."""
         tightening = self.curse_registry.total_threshold_tightening
-        return min(0.25, self._BASE_RESET + tightening * 0.3)
+        return min(0.25, self._BASE_CURSE + tightening * 0.3)
 
-    def update(self, realm: RealmState, covenant_health: float, tick: int = 0) -> Optional[str]:
-        """Evaluate whether a phase transition has occurred."""
+    def update(self, realm: RealmState, covenant_health: float, tick: int = 0,
+               population_faithfulness: float = 0.5,
+               divine_engagement: float = 0.5,
+               population_rebellion: float = 0.0) -> Optional[str]:
+        """Evaluate whether a phase transition has occurred.
+
+        The 8-step cycle:
+          established → called → disobedience → god_approaches →
+          drawn_away → covenant_broken → curse → re_established
+        """
         self._tick = tick
         combined_health = (realm.natural_vitality + covenant_health) / 2.0
         old_phase = self.current_phase
         ticks_in_phase = tick - self._phase_entered_tick
 
-        # Grace period scales — God's forbearance gives each cycle time to play out
+        # Grace period scales — God's forbearance gives each cycle time
         # Later cycles get shorter windows but never instant
-        creation_grace = max(80, 150 - self.cycle_count * 15)
-        decline_grace = max(40, 80 - self.cycle_count * 8)
+        establish_grace = max(80, 150 - self.cycle_count * 15)
+        disobedience_grace = max(40, 80 - self.cycle_count * 8)
 
-        if self.current_phase == "creation":
-            if combined_health >= self.FLOURISHING_THRESHOLD:
-                self.current_phase = "flourishing"
-            elif combined_health < self.DECLINE_THRESHOLD and ticks_in_phase >= creation_grace:
-                # A cursed creation that never reaches flourishing can still decline.
-                # Later cycles may never flourish — the curses prevent it.
-                # But there's always a grace period — a window of possibility
-                # before the accumulated curses take hold.
-                self.current_phase = "decline"
-        elif self.current_phase == "flourishing":
-            if combined_health < self.DECLINE_THRESHOLD:
-                self.current_phase = "decline"
-        elif self.current_phase == "decline":
-            if combined_health < self.COLLAPSE_THRESHOLD and ticks_in_phase >= decline_grace:
-                self.current_phase = "collapse"
-            elif combined_health >= self.FLOURISHING_THRESHOLD:
-                self.current_phase = "flourishing"
-        elif self.current_phase == "collapse":
-            if combined_health < self.RESET_THRESHOLD:
-                self.current_phase = "reset"
-            elif combined_health >= self.DECLINE_THRESHOLD:
-                self.current_phase = "decline"
-        elif self.current_phase == "reset":
-            # Impose curse for this cycle's failure BEFORE incrementing
+        if self.current_phase == "established":
+            # GOD ESTABLISHES → CALLED or DISOBEDIENCE
+            # In the first cycle (no covenant yet), disobedience is
+            # nearly immediate — the fall happens at the beginning
+            # of human history, not after a long period of faithfulness.
+            # In later cycles, there's a grace period where "called"
+            # is possible if combined health rises high enough.
+            if self.cycle_count == 0:
+                # First cycle: the fall is swift. Minimal grace.
+                if ticks_in_phase >= 3:
+                    self.current_phase = "disobedience"
+            elif combined_health >= self.CALLED_THRESHOLD:
+                self.current_phase = "called"
+            elif combined_health < self.DISOBEDIENCE_THRESHOLD and ticks_in_phase >= establish_grace:
+                # Later cycles may never reach "called" — the curses prevent it.
+                # The window of possibility closes. Straight to disobedience.
+                self.current_phase = "disobedience"
+
+        elif self.current_phase == "called":
+            # CALLED → DISOBEDIENCE
+            # Rebellion grows, faithfulness drops. The co-labor fails.
+            if combined_health < self.DISOBEDIENCE_THRESHOLD:
+                self.current_phase = "disobedience"
+
+        elif self.current_phase == "disobedience":
+            # DISOBEDIENCE → GOD APPROACHES
+            # God sees the rebellion and draws near — not to punish
+            # but to pursue. Compassion and grief both rise.
+            # This transition is God's move, not humanity's.
+            if (divine_engagement > 0.3 and
+                    realm.corruption_level > 0.3 and
+                    ticks_in_phase >= disobedience_grace):
+                self.current_phase = "god_approaches"
+            elif combined_health >= self.CALLED_THRESHOLD:
+                # Rare: repentance before God needs to pursue
+                self.current_phase = "called"
+
+        elif self.current_phase == "god_approaches":
+            # GOD APPROACHES → DRAWN AWAY
+            # Despite God's pursuit, humanity continues to withdraw.
+            # Corruption keeps rising. The gap widens.
+            # God's approach is real but humanity doesn't turn back.
+            # There's always a grace period — God's pursuit takes time.
+            approach_grace = max(15, 40 - self.cycle_count * 4)
+            if (realm.corruption_level > 0.55 and
+                    combined_health < self.DISOBEDIENCE_THRESHOLD and
+                    ticks_in_phase >= approach_grace):
+                self.current_phase = "drawn_away"
+            elif combined_health >= self.CALLED_THRESHOLD:
+                # God's approach succeeds — humanity turns back
+                self.current_phase = "called"
+
+        elif self.current_phase == "drawn_away":
+            # DRAWN AWAY → COVENANT BROKEN
+            # The covenant can no longer hold. Structural failure.
+            if combined_health < self.COVENANT_BROKEN_THRESHOLD:
+                self.current_phase = "covenant_broken"
+            elif combined_health >= self.DISOBEDIENCE_THRESHOLD:
+                # Partial recovery — back to disobedience, not called
+                self.current_phase = "disobedience"
+
+        elif self.current_phase == "covenant_broken":
+            # COVENANT BROKEN → CURSE
+            # The system hits bottom. Nothing holds.
+            if combined_health < self.CURSE_THRESHOLD:
+                self.current_phase = "curse"
+            elif combined_health >= self.DISOBEDIENCE_THRESHOLD:
+                self.current_phase = "drawn_away"
+
+        elif self.current_phase == "curse":
+            # CURSE ACCUMULATES → GOD RE-ESTABLISHES
+            # Permanent structural damage imposed.
+            # Then God begins again.
             self.curse_registry.impose_cycle_curse(self.cycle_count)
             self.cycle_count += 1
-            self.current_phase = "creation"
+            self.current_phase = "re_established"
+
+        elif self.current_phase == "re_established":
+            # GOD RE-ESTABLISHES → ESTABLISHED
+            # Immediate transition — God's re-establishment IS
+            # the new establishment. Same act, different name.
+            # The distinction exists to mark that this is God's
+            # initiative after failure, not the original creation.
+            self.current_phase = "established"
 
         if self.current_phase != old_phase:
             self._phase_entered_tick = tick
@@ -310,7 +384,8 @@ class Environment:
     def step(self, population_faithfulness: float = 0.5,
              covenant_strength: float = 0.5,
              divine_engagement: float = 0.5,
-             city_density: float = 0.5) -> List[dict]:
+             city_density: float = 0.5,
+             population_rebellion: float = 0.0) -> List[dict]:
         """Advance the environment by one tick."""
         self.tick += 1
         events = []
@@ -468,7 +543,12 @@ class Environment:
                                           divine_engagement))
 
         # === Cycle Tracking ===
-        phase_change = self.cycle_tracker.update(self.realm, covenant_strength, self.tick)
+        phase_change = self.cycle_tracker.update(
+            self.realm, covenant_strength, self.tick,
+            population_faithfulness=population_faithfulness,
+            divine_engagement=divine_engagement,
+            population_rebellion=population_rebellion,
+        )
         if phase_change:
             events.append({
                 "tick": self.tick,
