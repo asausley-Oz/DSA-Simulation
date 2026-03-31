@@ -255,10 +255,13 @@ class CycleTracker:
         old_phase = self.current_phase
         ticks_in_phase = tick - self._phase_entered_tick
 
-        # Grace period scales — God's forbearance gives each cycle time
-        # Later cycles get shorter windows but never instant
-        establish_grace = max(80, 150 - self.cycle_count * 15)
-        disobedience_grace = max(40, 80 - self.cycle_count * 8)
+        # Grace period scales — God's forbearance gives each cycle time.
+        # Each biblical cycle represents generations, not years.
+        # The 10 biblical cases span from Eden to Second Temple —
+        # each cycle must be substantial. Later cycles compress
+        # as curses accumulate, but never become trivial.
+        establish_grace = max(130, 440 - self.cycle_count * 32)
+        disobedience_grace = max(90, 270 - self.cycle_count * 18)
 
         if self.current_phase == "established":
             # GOD ESTABLISHES → CALLED or DISOBEDIENCE
@@ -303,7 +306,7 @@ class CycleTracker:
             # Corruption keeps rising. The gap widens.
             # God's approach is real but humanity doesn't turn back.
             # There's always a grace period — God's pursuit takes time.
-            approach_grace = max(15, 40 - self.cycle_count * 4)
+            approach_grace = max(45, 170 - self.cycle_count * 13)
             if (realm.corruption_level > 0.55 and
                     combined_health < self.DISOBEDIENCE_THRESHOLD and
                     ticks_in_phase >= approach_grace):
@@ -390,6 +393,28 @@ class Environment:
         self.tick += 1
         events = []
 
+        # === God's Re-establishment ===
+        # When a cycle completes and God re-establishes, apply the
+        # restoration at the START of the next tick — before entropy
+        # runs. This gives the restoration a real window to work in.
+        # Each successive re-establishment is less effective —
+        # the accumulated curses constrain what restoration achieves.
+        if self.cycle_tracker.current_phase in ("re_established", "established"):
+            cycle = self.cycle_tracker.cycle_count
+            curses = self.cycle_tracker.curse_registry
+            # Only restore once per re-establishment (first tick in phase)
+            if self.tick == self.cycle_tracker._phase_entered_tick + 1:
+                restoration = max(0.08, 0.5 - cycle * 0.04)
+                corruption_floor = min(0.6, 0.05 + cycle * 0.06)
+                self.realm.corruption_level = max(
+                    corruption_floor,
+                    self.realm.corruption_level * (1.0 - restoration))
+                self.realm.natural_vitality = min(
+                    0.9, self.realm.natural_vitality + restoration * 0.7)
+                self.realm.underworld_pressure = max(
+                    0.05,
+                    self.realm.underworld_pressure * (1.0 - restoration * 0.5))
+
         # === Life Force Flow ===
         # SCC: life originates from highest heaven, descends into natural order.
         # Without covenant and divine engagement, the channel narrows.
@@ -415,13 +440,18 @@ class Environment:
                       self.realm.corruption_level * 0.08)
 
         # === Firmament Effect ===
-        # In pristine creation, the firmament — the boundary between
-        # realms — is intact. Chaos seepage is dampened because the
-        # structural separation holds. After the first cycle failure,
-        # the firmament is permanently compromised. The waters above
-        # and below are no longer fully separated.
-        if curses.curse_count == 0:
-            chaos_rate *= 0.15
+        # The firmament — the boundary between realms — holds until
+        # the flood. Pre-flood cycles (Eden, Cain, Flood) all occur
+        # with the firmament intact but weakening. Each pre-flood
+        # curse damages the firmament — by cycle 3, the boundary
+        # is compromised enough for the waters to break through.
+        # "The windows of heaven were opened, and the fountains
+        # of the deep broke up."
+        if not self._flood_occurred:
+            pre_flood_curses = curses.curse_count
+            # Firmament weakens: 0.15 → 0.35 → 0.65 per curse
+            firmament_chaos_factor = min(1.0, 0.15 + pre_flood_curses * 0.25)
+            chaos_rate *= firmament_chaos_factor
 
         self.realm.chaos_seepage = chaos_rate
 
@@ -462,21 +492,17 @@ class Environment:
                         self.realm.corruption_level * self.corruption_feedback * density_amplifier)
 
         # === Firmament Effect on Entropy ===
-        # Before any cycle has failed, the firmament holds — the
-        # "very good" creation has inherent resistance to entropy.
-        # The ground is not yet cursed. The natural order pushes back
-        # through structural integrity, not covenant. After the first
-        # failure, this resilience is permanently lost.
-        # "Cursed is the ground because of you."
-        #
-        # The firmament dampens BOTH the base entropy rate AND the
-        # corruption feedback loop. In pristine creation, corruption
+        # The firmament holds until the flood. Pre-flood, corruption
         # doesn't self-amplify as aggressively — the vamphoric systems
-        # haven't fully formed yet. They emerge as creation degrades.
-        if curses.curse_count == 0:
+        # haven't fully formed yet. They emerge as creation degrades
+        # across the three pre-flood cycles (Eden, Cain, Flood).
+        # Each pre-flood curse weakens the firmament slightly.
+        if not self._flood_occurred:
             firmament_strength = self.realm.natural_vitality
-            # Scale down the total entropy input
-            firmament_dampening = max(0.08, 1.0 - 0.8 * firmament_strength)
+            # Each pre-flood curse weakens the firmament
+            curse_erosion = curses.curse_count * 0.15
+            effective_firmament = max(0.3, firmament_strength - curse_erosion)
+            firmament_dampening = max(0.08, 1.0 - 0.8 * effective_firmament)
             entropy_input *= firmament_dampening
 
         # ONLY covenant + divine engagement TOGETHER resist entropy
@@ -504,13 +530,17 @@ class Environment:
         # its long runway: 10 generations of 900-year lifespans.
         # After the first failure, the firmament shatters and corruption
         # converts at full rate.
-        if curses.curse_count == 0:
+        if not self._flood_occurred:
             conversion_rate = 0.01  # firmament absorbs most entropy pressure
-            # As vitality drops, the firmament weakens — corruption
-            # converts faster as creation degrades
-            conversion_rate += (1.0 - self.realm.natural_vitality) * 0.02
+            # As vitality drops and curses accumulate, firmament weakens
+            curse_erosion = curses.curse_count * 0.004
+            conversion_rate += (1.0 - self.realm.natural_vitality) * 0.02 + curse_erosion
         else:
-            conversion_rate = 0.05  # post-curse: full conversion rate
+            # Post-flood: conversion rate scales with accumulated curses.
+            # Early post-flood cycles still have some structural resistance
+            # (Noah's covenant, rainbow promise). Later cycles convert faster
+            # as the curse accumulation removes remaining resistance.
+            conversion_rate = 0.02 + min(0.03, curses.curse_count * 0.003)
 
         # CDT: pre-incarnation, entropy is only SLOWED, never stopped.
         # Even maximum covenant + divine engagement cannot reverse
