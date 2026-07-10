@@ -5,6 +5,11 @@ A ground-up rewrite of the DSA v6.5 engine with one governing rule:
 persecution waves, secular drift, and the ending itself all emerge from
 coupled feedback between agents and their regional environments.
 
+As of **v7.1**, the master variable is covenant distance (see
+"The v7.1 distance reformulation" below), aligning the physics with
+Covenant Distance Theology: two threads — humanity's cumulative movement
+away and God's relentless counter-movement of drawing near.
+
 Run it:
 
 ```
@@ -36,12 +41,59 @@ state variables. Different seeds therefore produce **genuinely different
 histories** — different wars, different awakenings, different endings —
 from identical rules.
 
+## The v7.1 distance reformulation
+
+The master equation is relational, not thermodynamic:
+
+```
+distance(t+1) = distance(t) + rebellion_flux − nearness_flux
+
+rebellion_flux = bent × (1 + vamphoric amplifier) × (1 + ratchet amplifier)
+               + empire share push + mass violence (crises)
+
+nearness_flux  = remnant divine labor × (1 + unity)          [human response]
+               + nearness_pull × nearness × (0.5 + 0.5·distance)  [God's thread]
+               + revival relief
+```
+
+**Humanity's thread.** Rebellion flux both moves `distance` and feeds a
+near-permanent ratchet, `cumulative_rebellion` (decay ≈ 0): the
+accumulated weight amplifies the bent and raises a hard **floor** under
+distance. Within history the world never returns all the way to Eden —
+renewals in late-game runs land *at* the ratchet floor, not beneath it.
+
+**God's thread.** `nearness` relaxes toward the broken (receptivity,
+persecution, crisis) and the praying remnant; it slowly departs from a
+comfort that ignores it (Ezekiel 10), but never below a floor — He
+remains faithful. The pull of nearness on distance scales **up** with
+distance (Rom 5:20 — grace abounds where the breach is greatest). Revival
+ignition is a sovereign visitation: the stochastic dice at the moment of
+ignition is deliberately where DSA's chosen freedom lives — conditions
+make the event possible, they never compel it — and each visitation jumps
+nearness. Martyrdom also draws God near to the suffering church.
+
+**Entropy is demoted to a derived shadow.** Physical decay lags
+relational breach (`entropy → distance` with a relaxation rate); crises
+wreck the physical world faster than they change hearts. Comfort,
+migration, and strain read the physical world; vamphoric growth and the
+endings read distance itself.
+
+**The fork closes the loop.** Vamphoric load feeds on distance, empire
+share, *and comfort* — "comfort substituted for transformation." A golden
+age is never placid; it is the era of the drain that runs undetected.
+This is what rots golden ages from within and ends the quiet-extinction
+pathology: prosperity breeds the parasite, the parasite breeds strain and
+persecution, hardship reopens receptivity, and the cycle turns.
+
 ## State variables (per region, all endogenous)
 
 | Variable | Raised by | Lowered by |
 |---|---|---|
-| entropy | the bent (amplified by vamphoric load), empire share, crises | remnant divine labor (x unity), rebuilding, revival |
-| vamphoric load | entropy, empire share | unity, remnant labor |
+| **distance** (master) | the bent × vamphoric × ratchet, empire share, crises | remnant labor (x unity), nearness pull, revival |
+| **nearness** | brokenness, deep remnant, visitation, martyrdom | comfort that ignores it (floored — He remains faithful) |
+| **cumulative rebellion** | a fraction of all rebellion flux (ratchet) | almost nothing (decay ≈ 0) |
+| entropy (derived) | lags toward distance; crisis shocks | lags toward distance when it closes |
+| vamphoric load | distance, empire share, **comfort** (the fork) | unity, remnant labor |
 | comfort | calm + low entropy | crises, upkeep |
 | unity | shared suffering (crisis, persecution) | comfort drift, schism |
 | receptivity | hardship (crisis, persecution, entropy) | comfort |
@@ -88,10 +140,12 @@ made them starves.
 There is no `year >= 2030` check. A run terminates only when a state
 condition holds for a sustained window:
 
-- **Consummation** — global entropy saturates, or the remnant goes
-  extinct.
+- **Consummation** — global distance saturates, or the remnant goes
+  extinct (12 sustained ticks).
 - **Renewal** — a deeply formed remnant becomes the culture (share ≥ 65%)
-  while entropy collapses.
+  while distance closes to the ratchet floor. Renewal must hold for 60
+  ticks — a spike of nearness is not the new creation; it has to survive
+  the comfort loop that has undone every golden age before it.
 - **Contested** — the tick limit arrives with the struggle unresolved.
 
 Across seeds the engine bifurcates: some worlds spiral down before

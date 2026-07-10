@@ -61,15 +61,42 @@ class EmergentConfig:
     adjacency: List[Tuple[int, int]] = field(
         default_factory=lambda: list(DEFAULT_ADJACENCY))
 
-    # --- entropy dynamics ---
-    bent: float = 0.006              # baseline corruption pressure per tick
-    bent_vamphoric_gain: float = 0.8  # how much vamphoric load amplifies bent
-    labor_efficiency: float = 0.22   # remnant divine-labor drag on entropy
-    entropy_recovery: float = 0.006  # slow rebuilding force (off during crisis)
-    entropy_diffusion: float = 0.03  # entropy leakage between neighbors
+    # --- covenant distance (the master equation) ---
+    # distance(t+1) = distance(t) + rebellion_flux - nearness_flux
+    # Humanity's thread pushes distance open; God's counter-movement and
+    # the remnant's response pull it closed. Entropy is downstream: the
+    # physical shadow that relational breach casts on the world.
+    bent: float = 0.006              # baseline rebellion pressure per tick
+    bent_vamphoric_gain: float = 0.8  # vamphoric systems amplify the bent
+    labor_efficiency: float = 0.22   # remnant divine-labor pull on distance
+    distance_diffusion: float = 0.03  # cultural osmosis between neighbors
+
+    # --- God's counter-movement (the second thread) ---
+    # The counter-movement is relentless (CDT) and abounds where the
+    # breach is greatest (Rom 5:20): the pull scales UP with distance.
+    nearness_pull: float = 0.045     # how strongly nearness closes distance
+    nearness_relax: float = 0.03     # incremental intimacy toward the broken
+    nearness_floor: float = 0.25     # God never fully withdraws within history
+    nearness_visitation: float = 0.18  # sovereign jump when revival ignites
+    nearness_departure: float = 0.003  # the glory departs when comfort ignores it
+    martyr_nearness_seed: float = 0.2  # God draws near to the suffering church
+
+    # --- cumulative rebellion (the ratchet) ---
+    # CDT: rebellion accumulates and is never fully erased within history.
+    # The ratchet raises both the bent and the floor under distance, so
+    # each cycle starts slightly worse — the trap closing.
+    ratchet_rate: float = 0.22       # fraction of rebellion flux that sticks
+    ratchet_decay: float = 0.0002    # almost never forgotten
+    ratchet_cap: float = 2.0
+    ratchet_bent_gain: float = 0.5   # accumulated weight amplifies the bent
+    ratchet_floor_gain: float = 0.12  # distance floor from accumulated weight
+
+    # --- entropy (derived: the physical shadow of distance) ---
+    entropy_shadow_rate: float = 0.12  # decay/rebuilding lag behind distance
 
     # --- vamphoric system ---
-    vamphoric_growth: float = 0.010  # feeds on entropy + empire share
+    vamphoric_growth: float = 0.010  # feeds on distance + empire share
+    vamphoric_comfort_gain: float = 0.5  # the fork: comfort feeds the parasite
     vamphoric_decay: float = 0.012   # eroded by unity + remnant labor
     drain_rate: float = 0.020        # scc_lock accumulation on nominal agents
     lock_relax: float = 0.015        # locks loosen when vamphoric load is low
@@ -104,19 +131,20 @@ class EmergentConfig:
     revival_tension_leak: float = 0.005  # tension decay (doubles when cold)
     revival_threshold: float = 1.0       # tension level that ignites revival
     revival_min_receptivity: float = 0.30
-    revival_ignition_prob: float = 0.25  # per-tick chance once conditions hold
-    revival_conversion_boost: float = 12.0
+    revival_ignition_prob: float = 0.12  # per-tick chance once conditions hold
+    revival_conversion_boost: float = 9.0
     revival_duration: Tuple[int, int] = (3, 7)   # min/max ticks
     revival_entropy_relief: float = 0.015        # entropy drop per revival tick
 
     # --- crisis (war / collapse) ---
-    strain_from_entropy: float = 0.012
+    strain_from_breach: float = 0.012    # from distance + its physical shadow
     strain_from_vamphoric: float = 0.009
     strain_from_disunity: float = 0.006
     strain_relief: float = 0.006         # baseline strain dissipation
     crisis_base_prob: float = 0.22       # max per-tick ignition probability
     crisis_strain_midpoint: float = 1.1  # strain at 50% of max ignition prob
     crisis_strain_width: float = 0.22    # softness of the ignition sigmoid
+    crisis_min_strain: float = 0.30      # no ignition on a near-empty tank
     crisis_duration: Tuple[int, int] = (3, 9)
     crisis_entropy_shock: float = 0.022  # entropy added per crisis tick
     crisis_mortality: float = 0.02       # extra death probability in crisis
@@ -151,11 +179,12 @@ class EmergentConfig:
     migration_rate: float = 0.003        # fraction considering a move per tick
 
     # --- endings (state-only, no dates) ---
-    consummation_entropy: float = 0.96   # sustained global entropy => collapse
+    consummation_distance: float = 0.96  # sustained global distance => collapse
     consummation_remnant_floor: float = 0.005  # remnant share extinction
     renewal_remnant: float = 0.65        # sustained remnant share => renewal
-    renewal_entropy_ceiling: float = 0.15
-    ending_sustain_ticks: int = 12       # condition must hold this long
+    renewal_distance_ceiling: float = 0.22
+    consummation_sustain_ticks: int = 12  # condition must hold this long
+    renewal_sustain_ticks: int = 60      # renewal must survive the comfort loop
 
     def param_dict(self) -> Dict[str, float]:
         """Flat dict of numeric parameters (for sensitivity sweeps)."""

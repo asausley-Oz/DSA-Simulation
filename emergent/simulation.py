@@ -139,6 +139,9 @@ class EmergentSimulation:
         weights = agg_after["pop"] / max(pop_total, 1.0)
         row = {
             "tick": self.tick,
+            "distance": float(env.distance @ weights),
+            "nearness": float(env.nearness @ weights),
+            "rebellion": float(env.rebellion @ weights),
             "entropy": float(env.entropy @ weights),
             "vamphoric": float(env.vamphoric @ weights),
             "unity": float(env.unity @ weights),
@@ -159,7 +162,7 @@ class EmergentSimulation:
             "migrants": moved,
         }
         for r, name in enumerate(env.names):
-            row[f"entropy_{name}"] = float(env.entropy[r])
+            row[f"distance_{name}"] = float(env.distance[r])
             row[f"remnant_{name}"] = float(agg_after["remnant_share"][r])
         self.history.append(row)
 
@@ -168,28 +171,35 @@ class EmergentSimulation:
 
     # ------------------------------------------------------------------
     def _check_endings(self, row: dict):
-        """State-only terminal attractors. No dates, only sustained state."""
+        """State-only terminal attractors on covenant distance. No dates.
+
+        Renewal must hold much longer than consummation: a spike of
+        nearness is not the new creation — it has to survive the comfort
+        loop that has undone every golden age before it.
+        """
         cfg = self.cfg
 
-        if (row["entropy"] >= cfg.consummation_entropy
+        if (row["distance"] >= cfg.consummation_distance
                 or row["remnant_share"] <= cfg.consummation_remnant_floor):
             self._ending_streak["consummation"] += 1
         else:
             self._ending_streak["consummation"] = 0
 
         if (row["remnant_share"] >= cfg.renewal_remnant
-                and row["entropy"] <= cfg.renewal_entropy_ceiling):
+                and row["distance"] <= cfg.renewal_distance_ceiling):
             self._ending_streak["renewal"] += 1
         else:
             self._ending_streak["renewal"] = 0
 
+        sustain = {"consummation": cfg.consummation_sustain_ticks,
+                   "renewal": cfg.renewal_sustain_ticks}
         for name, streak in self._ending_streak.items():
-            if streak >= cfg.ending_sustain_ticks and self.ending is None:
+            if streak >= sustain[name] and self.ending is None:
                 self.ending = name
                 self.env.events.append({
                     "tick": self.tick, "region": "GLOBAL",
                     "type": name,
-                    "detail": (f"entropy {row['entropy']:.3f}, "
+                    "detail": (f"distance {row['distance']:.3f}, "
                                f"remnant {row['remnant_share']:.3f}")})
 
     # ------------------------------------------------------------------
@@ -198,7 +208,8 @@ class EmergentSimulation:
             self.step()
             if verbose and self.tick % 100 == 0:
                 r = self.history[-1]
-                print(f"  tick {r['tick']:4d}  entropy={r['entropy']:.3f}  "
+                print(f"  tick {r['tick']:4d}  distance={r['distance']:.3f}  "
+                      f"nearness={r['nearness']:.3f}  "
                       f"remnant={r['remnant_share']*100:5.1f}%  "
                       f"pop={r['population']}")
         return pd.DataFrame(self.history)
@@ -216,6 +227,9 @@ class EmergentSimulation:
         return {
             "ticks_run": self.tick,
             "ending": self.ending or "contested (tick limit reached)",
+            "final_distance": last["distance"],
+            "final_nearness": last["nearness"],
+            "final_rebellion": last["rebellion"],
             "final_entropy": last["entropy"],
             "final_remnant_share": last["remnant_share"],
             "final_population": last["population"],

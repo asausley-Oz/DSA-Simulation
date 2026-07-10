@@ -28,12 +28,19 @@ def plot_run(history, events, env_names, out_dir: Path):
     fig, axes = plt.subplots(3, 2, figsize=(14, 12))
 
     ax = axes[0, 0]
-    ax.plot(history["tick"], history["entropy"], lw=2, label="global")
+    ax.plot(history["tick"], history["distance"], lw=2, color="tab:red",
+            label="distance (humanity's thread)")
+    ax.plot(history["tick"], history["nearness"], lw=2, color="tab:blue",
+            label="nearness (God's thread)")
+    ax.plot(history["tick"], history["entropy"], lw=1, color="gray",
+            ls="--", label="entropy (physical shadow)")
+    ax.plot(history["tick"], history["rebellion"] * 0.12, lw=1,
+            color="black", ls=":", label="ratchet floor (0.12 x rebellion)")
     for name in env_names:
-        ax.plot(history["tick"], history[f"entropy_{name}"],
-                lw=0.7, alpha=0.6, label=name)
-    ax.set_title("Entropy (global + regional)")
-    ax.legend(fontsize=7, ncol=2)
+        ax.plot(history["tick"], history[f"distance_{name}"],
+                lw=0.5, alpha=0.4)
+    ax.set_title("Covenant distance: the two threads")
+    ax.legend(fontsize=7)
     ax.grid(alpha=0.3)
 
     ax = axes[0, 1]
