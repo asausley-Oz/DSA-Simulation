@@ -195,18 +195,26 @@ the efficient strategy.
 
 Every world now begins with both halves of Eden's aftermath (Gen 3).
 
-**The Seed (Gen 3:15).** There is always exactly one living bearer of
-the promise. The bearer cannot apostatize, cannot be empire-captured,
-and is kept formed (≥ 0.75). At the bearer's death the seed passes to
-the most-formed living remnant; if the whole remnant line has been
-cut, God raises a bearer from the stones (Matt 3:9). The line survives
-~25–30 generational passes per history — and it survives the end
-itself: **in every consummated world the seed still endures**, and the
-consummation event records where. Election also has its purpose: the
-bearer's region qualifies as an incarnation vessel (a lone Mary in a
-backwater suffices where whole churches are not required) — but only
-under the full measure of drawn-near presence. A hardened world can
-hold the seed and still refuse the Son.
+**The Seed (Gen 3:15).** Until the incarnation, there is always
+exactly one living bearer of the promise. The bearer cannot
+apostatize, cannot be empire-captured, and is kept formed (≥ 0.75).
+At the bearer's death the seed passes to the most-formed living
+remnant; if the whole remnant line has been cut, God raises a bearer
+from the stones (Matt 3:9). The line survives ~25–30 generational
+passes per history. Election also has its purpose: the bearer's
+region qualifies as an incarnation vessel (a lone Mary in a backwater
+suffices where whole churches are not required) — but only under the
+full measure of drawn-near presence. A hardened world can hold the
+seed and still refuse the Son.
+
+**The line is fulfilled, not perpetual.** The seed of the woman IS
+the one who arrives: at the incarnation the bearer mechanic ends —
+the promise is no longer carried by blood but poured out. Every world
+therefore ends in exactly one of two seed-states, and never a third:
+*enduring* (the world died before the fullness of time, the promise
+still held — the consummation event records where the seed stands) or
+*fulfilled* (the promise delivered, whatever the world did with it).
+No history ends with the promise lost.
 
 **The Toil (Gen 3:17-19).** The ground resists: comfort grows slower,
 rebuilding is sweaty (decay is free, restoration is not), and the

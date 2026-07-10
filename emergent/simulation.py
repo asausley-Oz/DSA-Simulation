@@ -272,16 +272,19 @@ class EmergentSimulation:
         births = pop.births(env.comfort)
         moved = pop.migrate(env.attractiveness(), env.neighbors)
 
-        # Eve's promise: the seed always has a living bearer. If the
-        # line was cut this tick, it passes — or is raised from stones.
-        how = pop.maintain_seed()
-        if how == "raised":
-            env.events.append({
-                "tick": self.tick,
-                "region": env.names[int(pop.region[pop.seed][0])],
-                "type": "seed",
-                "detail": ("the remnant line was cut — a bearer raised "
-                           "from the stones (Matt 3:9)")})
+        # Eve's promise: the seed always has a living bearer — UNTIL the
+        # incarnation. The line exists to carry the promise to the
+        # vessel; when the Word is made flesh the line is fulfilled,
+        # and the promise is no longer carried by blood but poured out.
+        if self.incarnation_tick is None:
+            how = pop.maintain_seed()
+            if how == "raised":
+                env.events.append({
+                    "tick": self.tick,
+                    "region": env.names[int(pop.region[pop.seed][0])],
+                    "type": "seed",
+                    "detail": ("the remnant line was cut — a bearer "
+                               "raised from the stones (Matt 3:9)")})
 
         # ---- 7b. incarnation: the fullness of time ---------------------
         agg_after = pop.regional_aggregates(n_regions)
@@ -372,10 +375,15 @@ class EmergentSimulation:
         self.incarnation_region = vessel
         env.nearness[vessel] = max(env.nearness[vessel],
                                    cfg.incarnation_nearness_hold)
+        # The line of the woman is FULFILLED, not continued: the seed
+        # it carried has arrived. From here there is no protected
+        # bearer — the promise is no longer held by blood.
+        self.pop.seed[:] = False
         env.events.append({
             "tick": self.tick, "region": env.names[vessel],
             "type": "incarnation",
-            "detail": (f"the Word made flesh — record weight "
+            "detail": (f"the Word made flesh — the seed of the woman "
+                       f"arrives, the line fulfilled; record weight "
                        f"{record_weight:.2f}, nearness held at "
                        f"{cfg.incarnation_nearness_hold:.2f}")})
 
@@ -602,6 +610,7 @@ class EmergentSimulation:
             "seed_passes": self.pop.seed_passes,
             "seed_raised": self.pop.seed_raised,
             "seed_endures": bool((self.pop.alive & self.pop.seed).any()),
+            "seed_fulfilled": self.incarnation_tick is not None,
             "falling_away_tick": self.falling_away_tick,
             "patience_open": self.patience_active,
             "schemes_run": (dict(self.adversary.schemes_run)
