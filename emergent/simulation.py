@@ -82,10 +82,15 @@ class EmergentSimulation:
         np.clip(pop.formation, 0.0, 1.0, out=pop.formation)
 
         # ---- 3. conversion (contact + receptivity + revival cascade) --
+        # Awareness gates turning: contact and openness cannot convert a
+        # heart that does not know it is dying. A small floor remains —
+        # grace can reach even the blind, just rarely.
         contact = (agg["remnant_share"]
                    * np.maximum(agg["remnant_formation"], 0.2))
         boost = 1.0 + cfg.revival_conversion_boost * env.revival_active
-        p_conv = (cfg.conversion_base * contact * env.receptivity * boost)[reg]
+        aware_gate = 0.05 + 0.95 * env.awareness
+        p_conv = (cfg.conversion_base * contact * env.receptivity
+                  * boost * aware_gate)[reg]
         convertible = alive & ~pop.born & ~pop.empire
         converts = convertible & (rng.random(pop.capacity) < p_conv)
         if converts.any():
@@ -147,6 +152,8 @@ class EmergentSimulation:
             "unity": float(env.unity @ weights),
             "comfort": float(env.comfort @ weights),
             "receptivity": float(env.receptivity @ weights),
+            "delusion": float(env.delusion @ weights),
+            "awareness": float(env.awareness @ weights),
             "persecution": float(env.persecution @ weights),
             "strain": float(env.strain @ weights),
             "remnant_share": float(agg_after["remnant_share"] @ weights),
@@ -230,6 +237,7 @@ class EmergentSimulation:
             "final_distance": last["distance"],
             "final_nearness": last["nearness"],
             "final_rebellion": last["rebellion"],
+            "final_delusion": last["delusion"],
             "final_entropy": last["entropy"],
             "final_remnant_share": last["remnant_share"],
             "final_population": last["population"],

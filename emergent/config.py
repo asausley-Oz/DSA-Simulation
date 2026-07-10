@@ -110,6 +110,22 @@ class EmergentConfig:
     apostasy_base: float = 0.015     # comfort-driven falling-away rate
     fear_apostasy: float = 0.03      # persecution-driven falling-away rate
 
+    # --- delusion / awareness (Anti-Life Delusion) ---
+    # Delusion is the mechanism that conceals the dying: it grows where
+    # vamphoric systems institutionalize it and where comfort makes the
+    # lie preferable. It is NOT removed by suffering alone (Pharaoh
+    # hardened) — it breaks only under exposure: the remnant naming the
+    # system, martyrdom's undeniable testimony, visible systemic failure,
+    # and the light of revival. Awareness is the precondition of turning.
+    delusion_growth_vamphoric: float = 0.010  # systems suppress self-awareness
+    delusion_growth_comfort: float = 0.005    # the comfortable lie, embraced
+    delusion_exposure_witness: float = 0.06   # deep remnant names the drain
+    delusion_exposure_crisis: float = 0.020   # the simulacra visibly fail
+    delusion_exposure_revival: float = 0.06   # the Light exposes
+    martyr_delusion_break: float = 0.4        # testimony that cannot be unseen
+    awareness_blindness_cap: float = 0.95     # complete blindness is possible
+    hardening_threshold: float = 0.85         # delusion level logged as event
+
     # --- receptivity / conversion ---
     receptivity_relax: float = 0.10  # speed receptivity tracks its target
     conversion_base: float = 0.10    # contact-conversion coefficient

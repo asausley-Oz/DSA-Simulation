@@ -85,6 +85,35 @@ This is what rots golden ages from within and ends the quiet-extinction
 pathology: prosperity breeds the parasite, the parasite breeds strain and
 persecution, hardship reopens receptivity, and the cycle turns.
 
+## The v7.2 delusion layer (Anti-Life Delusion)
+
+Delusion is the mechanism that conceals the dying. Per region it:
+
+- **grows** where vamphoric systems suppress self-awareness and where
+  comfort makes the lie preferable to the truth;
+- is **not** removed by suffering alone (Pharaoh's pattern) — it yields
+  only to **exposure**: the deep-formation remnant naming the system
+  (√-scaled, so a small faithful band still cuts), martyrdom's testimony
+  that cannot be argued with, the visible failure of the simulacra when
+  crisis strikes, and the light of revival.
+
+`awareness = 1 − 0.95 × delusion` (complete blindness is possible) gates
+the two doors of turning:
+
+1. **Receptivity** — hardship opens only hearts that can still see; a
+   deluded region misreads its own suffering.
+2. **Conversion** — contact and openness cannot convert a heart that
+   does not know it is dying (a small grace floor remains).
+
+When a region's delusion crosses 0.85 a **hardening** event is logged:
+the drain now runs undetected. Hardened regions can pass through entire
+crisis epochs without revival — which changes the diagnosis of doomed
+histories. Across seeds, worlds that end in consummation die with high
+delusion (~0.55+, hardening events shortly before the end), worlds that
+reach renewal die to the lie first (delusion → ~0.05), and contested
+worlds oscillate in between. The doomed runs are no longer "too late" —
+they are blind.
+
 ## State variables (per region, all endogenous)
 
 | Variable | Raised by | Lowered by |
@@ -96,7 +125,8 @@ persecution, hardship reopens receptivity, and the cycle turns.
 | vamphoric load | distance, empire share, **comfort** (the fork) | unity, remnant labor |
 | comfort | calm + low entropy | crises, upkeep |
 | unity | shared suffering (crisis, persecution) | comfort drift, schism |
-| receptivity | hardship (crisis, persecution, entropy) | comfort |
+| receptivity | hardship (crisis, persecution, entropy) × awareness | comfort |
+| **delusion** | vamphoric load, comfort | exposure: remnant witness, martyrdom, crisis, revival |
 | persecution | vamphoric x empire pressure on a **visible minority** | remnant becoming a majority, system loosening |
 
 ## Event mechanisms (former dated triggers → accumulators)

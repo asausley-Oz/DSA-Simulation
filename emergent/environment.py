@@ -51,6 +51,8 @@ class Environment:
         self.comfort = np.array([r.comfort for r in cfg.regions])
         self.receptivity = np.full(n, 0.25)
         self.persecution = np.zeros(n)
+        self.delusion = np.full(n, 0.30)   # Anti-Life Delusion level
+        self._hardened = np.zeros(n, dtype=bool)  # for hardening events
 
         # --- accumulators (the "pressure gauges" behind events) ---
         self.strain = np.zeros(n)            # -> crisis
@@ -71,6 +73,12 @@ class Environment:
     @property
     def revival_active(self) -> np.ndarray:
         return (self.revival_remaining > 0).astype(float)
+
+    @property
+    def awareness(self) -> np.ndarray:
+        """Awareness of condition — the precondition of turning.
+        Complete blindness is possible; full clarity is not guaranteed."""
+        return 1.0 - self.cfg.awareness_blindness_cap * self.delusion
 
     def attractiveness(self) -> np.ndarray:
         """What migrants move toward: low entropy, no crisis, some comfort."""
@@ -177,9 +185,44 @@ class Environment:
                    - cfg.unity_erosion * self.comfort)
         self.unity = np.clip(self.unity + d_unity, 0.05, 1.0)
 
-        # --- receptivity: hardship opens hearts, comfort closes them ---
-        target = np.clip(0.20 + 0.45 * crisis + 0.55 * self.persecution
-                         + 0.25 * self.entropy - 0.45 * self.comfort,
+        # --- delusion: the concealment of the dying ------------------
+        # Grows where vamphoric systems suppress awareness and where
+        # comfort makes the lie preferable. Suffering alone does NOT
+        # remove it — it yields only to exposure: the remnant naming the
+        # system, the light of revival, and the visible failure of the
+        # simulacra when crisis strikes.
+        d_delusion = (
+            cfg.delusion_growth_vamphoric * self.vamphoric
+            + cfg.delusion_growth_comfort * self.comfort
+            - cfg.delusion_exposure_witness
+            * np.sqrt(np.clip(agg["deep_share"], 0, 1))
+            - cfg.delusion_exposure_crisis * crisis
+            - cfg.delusion_exposure_revival * revival
+        )
+        self.delusion = np.clip(self.delusion + d_delusion, 0.0, 1.0)
+
+        # Hardening events: a region crossing deep blindness is logged —
+        # the drain now runs undetected, and hardship will be misread.
+        for r in range(self.n):
+            if self.delusion[r] >= cfg.hardening_threshold:
+                if not self._hardened[r]:
+                    self._hardened[r] = True
+                    new_events.append({
+                        "tick": tick, "region": self.names[r],
+                        "type": "hardening",
+                        "detail": f"delusion {self.delusion[r]:.2f}; "
+                                  "awareness nearly lost"})
+            elif self.delusion[r] < cfg.hardening_threshold - 0.15:
+                self._hardened[r] = False  # exposure has broken through
+
+        # --- receptivity: hardship opens hearts — but only hearts that
+        # can still see. A deluded region misreads its own suffering
+        # (Pharaoh's pattern): the hardship terms are gated by awareness.
+        aware = self.awareness
+        target = np.clip(0.20 + (0.45 * crisis + 0.55 * self.persecution
+                                 + 0.25 * self.entropy)
+                         * (0.3 + 0.7 * aware)
+                         - 0.45 * self.comfort,
                          0.0, 1.0)
         self.receptivity += cfg.receptivity_relax * (target - self.receptivity)
 
@@ -303,4 +346,9 @@ class Environment:
             self.unity + cfg.martyr_unity_seed * martyr_share, 0.05, 1.0)
         self.nearness = np.clip(
             self.nearness + cfg.martyr_nearness_seed * martyr_share,
+            0.0, 1.0)
+        # Martyrdom is exposure that cannot be argued with: the system's
+        # true face is shown, and delusion breaks where the blood falls.
+        self.delusion = np.clip(
+            self.delusion - self.cfg.martyr_delusion_break * martyr_share,
             0.0, 1.0)

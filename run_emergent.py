@@ -56,9 +56,11 @@ def plot_run(history, events, env_names, out_dir: Path):
     ax = axes[1, 0]
     ax.plot(history["tick"], history["comfort"], label="comfort")
     ax.plot(history["tick"], history["receptivity"], label="receptivity")
+    ax.plot(history["tick"], history["delusion"], label="delusion",
+            color="black", lw=1.5)
     ax.plot(history["tick"], history["unity"], label="unity")
     ax.plot(history["tick"], history["persecution"], label="persecution")
-    ax.set_title("The secular cycle: comfort vs. receptivity")
+    ax.set_title("The secular cycle: comfort, delusion, receptivity")
     ax.legend(fontsize=8)
     ax.grid(alpha=0.3)
 
@@ -88,8 +90,8 @@ def plot_run(history, events, env_names, out_dir: Path):
     # Event raster: when and where things happened.
     ax = axes[2, 1]
     colors = {"crisis": "tab:red", "revival": "tab:green",
-              "schism": "tab:orange", "consummation": "black",
-              "renewal": "gold"}
+              "schism": "tab:orange", "hardening": "black",
+              "consummation": "dimgray", "renewal": "gold"}
     if not events.empty:
         region_order = list(env_names) + ["GLOBAL"]
         for _, ev in events.iterrows():
