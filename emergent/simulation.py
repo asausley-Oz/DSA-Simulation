@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 from typing import List, Optional
 
+from .adversary import Adversary
 from .config import EmergentConfig
 from .environment import Environment
 from .population import Population
@@ -29,10 +30,13 @@ class EmergentSimulation:
         self.rng = np.random.default_rng(self.cfg.seed)
         self.env = Environment(self.cfg, self.rng)
         self.pop = Population(self.cfg, self.rng)
+        self.adversary = (Adversary(self.cfg, self.rng)
+                          if self.cfg.enable_adversary else None)
 
         self.tick = 0
         self.history: List[dict] = []
         self.ending: Optional[str] = None
+        self.atonement_tick: Optional[int] = None
         self._ending_streak = {"consummation": 0, "renewal": 0}
 
     # ------------------------------------------------------------------
@@ -46,6 +50,13 @@ class EmergentSimulation:
         alive = pop.alive
         reg = pop.region
         counters = {"conversions": 0, "apostasies": 0, "martyrs": 0}
+
+        # ---- 0. the adversary schemes ---------------------------------
+        accuse_region = None
+        if self.adversary is not None:
+            adv_events, accuse_region = self.adversary.step(
+                env, agg, self.tick)
+            env.events.extend(adv_events)
 
         # ---- 1. vamphoric drain on agents -----------------------------
         vamp = env.vamphoric[reg]
@@ -87,8 +98,11 @@ class EmergentSimulation:
         # witness, and ambiently when crisis or revival exposes the lie.
         crisis_r = env.crisis_active[reg]
         revival_r = env.revival_active[reg]
+        whisper = (cfg.adversary_delusion_gain * self.adversary.power
+                   if self.adversary is not None else 0.0)
         d_del = ((cfg.delusion_growth_vamphoric * vamp
-                  + cfg.delusion_growth_comfort * env.comfort[reg])
+                  + cfg.delusion_growth_comfort * env.comfort[reg]
+                  + whisper)
                  * (1.0 - 0.5 * pop.formation)
                  - cfg.delusion_exposure_crisis * crisis_r
                  - cfg.delusion_exposure_revival * revival_r)
@@ -151,6 +165,14 @@ class EmergentSimulation:
             pop.delusion[alive] = np.clip(
                 pop.delusion[alive] - m_break[alive], 0.0, 1.0)
 
+        # ---- 5b. accusation: the deep remnant sifted like wheat --------
+        if accuse_region is not None:
+            sifted = remnant & (reg == accuse_region) & (pop.formation > 0.6)
+            pop.agency[sifted] = np.maximum(
+                0.0, pop.agency[sifted] - cfg.accuse_agency_drain)
+            pop.pride[sifted] = np.minimum(
+                1.0, pop.pride[sifted] + cfg.accuse_pride_gain)
+
         # ---- 6. schism defection: institutionalized remnant falls back -
         for r in schism_regions:
             members = np.flatnonzero(remnant & (reg == r))
@@ -168,8 +190,12 @@ class EmergentSimulation:
         births = pop.births(env.comfort)
         moved = pop.migrate(env.attractiveness(), env.neighbors)
 
-        # ---- 8. record ---------------------------------------------
+        # ---- 7b. atonement: the trap broken from within ----------------
         agg_after = pop.regional_aggregates(n_regions)
+        if (cfg.enable_atonement and self.atonement_tick is None):
+            self._check_atonement(agg_after)
+
+        # ---- 8. record ---------------------------------------------
         pop_total = agg_after["pop"].sum()
         weights = agg_after["pop"] / max(pop_total, 1.0)
         row = {
@@ -191,6 +217,10 @@ class EmergentSimulation:
             "population": int(pop_total),
             "crises_active": int(env.crisis_active.sum()),
             "revivals_active": int(env.revival_active.sum()),
+            "adversary_power": (self.adversary.power
+                                if self.adversary else 0.0),
+            "adversary_exposure": (self.adversary.exposure
+                                   if self.adversary else 0.0),
             "conversions": counters["conversions"],
             "apostasies": counters["apostasies"],
             "martyrs": counters["martyrs"],
@@ -207,6 +237,53 @@ class EmergentSimulation:
         self.tick += 1
 
     # ------------------------------------------------------------------
+    def _check_atonement(self, agg: dict):
+        """The fullness of time — state conditions, never a date.
+
+        The trap must be fully sprung (the record of rebellion heavy
+        across the world) AND a prepared vessel must exist: a region
+        holding a deeply formed remnant under drawn-near presence. Then
+        the trap is broken from within, once, for all regions.
+        """
+        cfg, env = self.cfg, self.env
+        weights = agg["pop"] / max(agg["pop"].sum(), 1.0)
+        record_weight = float(env.rebellion @ weights)
+        if record_weight < cfg.atonement_rebellion_trigger:
+            return
+
+        vessel_mask = ((agg["deep_share"] >= cfg.atonement_vessel_deep)
+                       & (env.nearness >= cfg.atonement_vessel_nearness))
+        if not vessel_mask.any():
+            return
+        vessel = int(np.argmax(np.where(vessel_mask, env.nearness, -1.0)))
+
+        # The record of debt cancelled — for every region, from one.
+        env.rebellion *= (1.0 - cfg.atonement_rebellion_clear)
+        # The veil torn.
+        floor = np.clip(cfg.ratchet_floor_gain * env.rebellion, 0.0, 0.6)
+        env.distance = np.clip(
+            env.distance - cfg.atonement_distance_break, floor, 1.0)
+        # The indwelling begins: presence jumps and its floor rises.
+        env.nearness = np.clip(
+            env.nearness + cfg.atonement_nearness_gift, 0.0, 1.0)
+        env.nearness_floor_bonus = cfg.atonement_nearness_floor_gain
+        # Grace now covers part of what would otherwise stick.
+        env.grace_factor = cfg.atonement_grace
+        # The Light has come — delusion breaks worldwide.
+        self.pop.delusion = np.clip(
+            self.pop.delusion - cfg.atonement_delusion_break, 0.0, 1.0)
+        # The accuser disarmed (Col 2:15).
+        if self.adversary is not None:
+            self.adversary.disarmed = True
+
+        self.atonement_tick = self.tick
+        env.events.append({
+            "tick": self.tick, "region": env.names[vessel],
+            "type": "atonement",
+            "detail": (f"record weight {record_weight:.2f} cancelled "
+                       f"{cfg.atonement_rebellion_clear:.0%}; "
+                       "the accuser disarmed")})
+
     def _check_endings(self, row: dict):
         """State-only terminal attractors on covenant distance. No dates.
 
@@ -280,5 +357,8 @@ class EmergentSimulation:
             "total_conversions": sum(h["conversions"] for h in self.history),
             "total_apostasies": sum(h["apostasies"] for h in self.history),
             "total_martyrs": sum(h["martyrs"] for h in self.history),
+            "atonement_tick": self.atonement_tick,
+            "schemes_run": (dict(self.adversary.schemes_run)
+                            if self.adversary else {}),
             "events_by_type": by_type,
         }

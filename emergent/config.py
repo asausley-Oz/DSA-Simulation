@@ -200,6 +200,42 @@ class EmergentConfig:
     # --- migration ---
     migration_rate: float = 0.003        # fraction considering a move per tick
 
+    # --- the adversary (the prince of the power of the air) ---
+    # Parasitic, never independent: his power derives from the breach —
+    # accumulated rebellion, open distance, captured agents. Naming him
+    # (exposure) drains him; the atonement disarms him.
+    enable_adversary: bool = True
+    adversary_power_relax: float = 0.05    # how fast power tracks the breach
+    adversary_from_rebellion: float = 0.35
+    adversary_from_distance: float = 0.35
+    adversary_from_empire: float = 0.50
+    adversary_exposure_damp: float = 0.60  # being named cuts his power
+    adversary_scheme_prob: float = 0.35    # per-tick chance x power
+    adversary_delusion_gain: float = 0.006  # the passive whisper
+    adversary_vamphoric_gain: float = 0.004
+    adversary_disarmed_factor: float = 0.35  # power ceiling after Col 2:15
+    accuse_agency_drain: float = 0.15      # sifting the deep remnant
+    accuse_pride_gain: float = 0.08
+
+    # --- atonement (the trap broken from within) ---
+    # Fires ONCE, at the fullness of time — state conditions, no dates:
+    # the record of accumulated rebellion must be heavy (the trap fully
+    # sprung) AND a prepared vessel must exist (a region with a deep
+    # remnant under high nearness). Effects, per CDT: the record of debt
+    # cancelled (ratchet slashed), the veil torn (distance breaks), the
+    # Spirit given (nearness floor rises), the accuser disarmed, grace
+    # covering what would otherwise stick.
+    enable_atonement: bool = True
+    atonement_rebellion_trigger: float = 0.55  # the fullness of the weight
+    atonement_vessel_deep: float = 0.015       # a faithful few suffice...
+    atonement_vessel_nearness: float = 0.40    # ...under drawn-near presence
+    atonement_rebellion_clear: float = 0.75    # fraction of the record cancelled
+    atonement_distance_break: float = 0.30     # the veil torn
+    atonement_nearness_gift: float = 0.25      # the indwelling begins
+    atonement_nearness_floor_gain: float = 0.10
+    atonement_grace: float = 0.50   # post-atonement ratchet multiplier
+    atonement_delusion_break: float = 0.30     # the Light has come
+
     # --- endings (state-only, no dates) ---
     consummation_distance: float = 0.96  # sustained global distance => collapse
     consummation_remnant_floor: float = 0.005  # remnant share extinction

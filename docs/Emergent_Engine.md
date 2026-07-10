@@ -154,6 +154,63 @@ Renewal's distance ceiling rises with the ratchet floor
 scars with it — rather than being locked out by its own accumulated
 history.
 
+## The adversary (v7.4): the prince of the power of the air
+
+Per Anti-Life Delusion, the powers that entice delusion are "not
+independent powers but expressions of the disorder rebellion
+introduced." The adversary is therefore **parasitic, never a rival
+god**: his power derives entirely from the breach (accumulated
+rebellion + open distance + captured agents), and three structural
+limits bind him — he works in the dark (being *named* drains his
+power), his sharpest weapon backfires (violence makes martyrs, and
+martyr-seed grows what he strikes), and the atonement disarms him
+(Col 2:15).
+
+He schemes with intelligence, prioritized against God's counter-
+movement: **QUENCH** (crush revival tension nearest ignition — the
+seed snatched away), **GILD** (the subtlest: reward the strongest
+church into comfort — golden chains), **ACCUSE** (sift the deep
+remnant — drain agency, inflate pride; risks being named, which raises
+his exposure), **INCITE** (stir war where the remnant is absent, so
+ruin cannot seed). Schemes appear in the event timeline.
+
+Effect: with the adversary active, consummation rises from ~36% to
+~55% of histories. Quench is his most-used weapon — the engine's own
+play confirms that suppressing awakening is the efficient strategy.
+
+## Atonement (v7.4): the trap broken from within
+
+Fires **once**, at the fullness of time — state conditions, never a
+date: the record of accumulated rebellion must be heavy across the
+world AND a prepared vessel must exist (a region holding even a small
+deeply-formed remnant under drawn-near presence). Effects, per CDT:
+the record of debt cancelled (cumulative rebellion slashed 75%), the
+veil torn (distance breaks), the indwelling begins (nearness jumps and
+its floor permanently rises), the Light comes (delusion breaks
+worldwide), grace covers half of what would otherwise ratchet, and the
+accuser is disarmed.
+
+**What the A/B ensembles taught (100 seeds each):**
+
+1. A first implementation gated the vessel on a *thriving* church
+   (deep remnant + nearness ≥ 0.55). Result: outcome distributions
+   with and without atonement were statistically identical — perfect
+   correlation (every atonement-world renewed), zero causation. The
+   vessel condition selected worlds already being saved. A gospel
+   that only comes to the already-revived saves no one.
+2. Retuned to come to the weak ("while we were still sinners" — tiny
+   vessel, lower nearness bar, earlier trigger, stronger light),
+   atonement fires in ~56% of histories and every world it reaches
+   escapes consummation; total non-doomed histories rise from ~45 to
+   ~56 (+24% relative). Real rescue at the margin — but the partition
+   stands: worlds whose faithful line goes extinct before the fullness
+   of time never receive it.
+3. The remaining gap names the next missing doctrine: **election** —
+   the biblical arc has God actively preserving the remnant line
+   (Noah, Abram, Egypt, the return) precisely so a vessel exists at
+   the fullness of time. The engine has no line-preservation
+   mechanism yet.
+
 ## Eschatological cartography
 
 `python run_emergent.py --cartography` sweeps a 2-D grid

@@ -93,6 +93,7 @@ def plot_run(history, events, env_names, out_dir: Path):
     ax = axes[2, 1]
     colors = {"crisis": "tab:red", "revival": "tab:green",
               "schism": "tab:orange", "hardening": "black",
+              "scheme": "tab:purple", "atonement": "deepskyblue",
               "consummation": "dimgray", "renewal": "gold"}
     if not events.empty:
         region_order = list(env_names) + ["GLOBAL"]

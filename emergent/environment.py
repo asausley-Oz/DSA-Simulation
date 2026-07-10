@@ -65,6 +65,12 @@ class Environment:
         self.crisis_remaining = np.zeros(n, dtype=int)
         self.revival_remaining = np.zeros(n, dtype=int)
 
+        # Post-atonement, grace covers a portion of what would otherwise
+        # stick to the record: the ratchet is multiplied by this factor.
+        self.grace_factor = 1.0
+        # Post-atonement, the indwelling raises the floor of presence.
+        self.nearness_floor_bonus = 0.0
+
         self.events: List[dict] = []
 
     # ------------------------------------------------------------------
@@ -130,7 +136,8 @@ class Environment:
         # almost never forgotten. It raises the floor under distance —
         # within history the world never returns all the way to Eden.
         self.rebellion = np.clip(
-            self.rebellion + cfg.ratchet_rate * rebellion_flux
+            self.rebellion
+            + cfg.ratchet_rate * self.grace_factor * rebellion_flux
             - cfg.ratchet_decay, 0.0, cfg.ratchet_cap)
         distance_floor = np.clip(
             cfg.ratchet_floor_gain * self.rebellion, 0.0, 0.6)
@@ -143,16 +150,17 @@ class Environment:
         # God draws near to the broken and to the praying remnant; the
         # movement is toward humanity even in rebellion, but comfort that
         # ignores the presence sees the glory slowly depart (Ezekiel 10).
+        floor = cfg.nearness_floor + self.nearness_floor_bonus
         brokenness = np.clip(0.5 * self.receptivity + 0.3 * self.persecution
                              + 0.2 * crisis, 0.0, 1.0)
         nearness_target = np.clip(
-            cfg.nearness_floor + 0.55 * brokenness + 0.40 * agg["deep_share"],
+            floor + 0.55 * brokenness + 0.40 * agg["deep_share"],
             0.0, 1.0)
         self.nearness += cfg.nearness_relax * (nearness_target - self.nearness)
         self.nearness -= cfg.nearness_departure * np.maximum(
             self.comfort - self.receptivity, 0.0)
         # He remains faithful (2 Tim 2:13) — nearness never fully withdraws.
-        self.nearness = np.clip(self.nearness, cfg.nearness_floor * 0.5, 1.0)
+        self.nearness = np.clip(self.nearness, floor * 0.5, 1.0)
 
         # --- entropy: the physical shadow of relational breach ----------
         # Decay lags distance both ways: breach corrodes the world slowly,
