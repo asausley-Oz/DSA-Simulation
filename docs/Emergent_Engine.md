@@ -415,6 +415,15 @@ parousia, the tribulation is the greatest tax the remnant ever pays:
   time is short): scheme force and cadence are boosted, and division —
   brother betraying brother (Matt 24:10) — becomes his sharpest blade,
   with doubled schism force on a short cooldown.
+- **The deception that would take even the elect** (Matt 24:24): every
+  tribulation tick, every remnant member faces a 20% apostasy chance
+  shielded only by formation — 2%/tick for the deeply formed,
+  10%/tick for the barely formed. "If possible" is load-bearing: the
+  elect mostly stand, the middle is sifted away. The enduring remnant
+  at the parousia falls from ~28% to ~8% — when the Son of Man comes,
+  He finds faith, but little (Luke 18:8). The sift can even drag a
+  tribulation world below the extinction floor into consummation:
+  the falling away can now genuinely kill a world it grips.
 
 A complete falling-away arc from one history: incarnation 259 →
 deicide 269 → atonement (record cancelled 81%) → response dries →

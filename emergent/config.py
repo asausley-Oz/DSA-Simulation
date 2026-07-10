@@ -316,6 +316,12 @@ class EmergentConfig:
     tribulation_martyr_mute: bool = True
     tribulation_scheme_boost: float = 1.6   # his movements strike harder
     tribulation_schism_bonus: float = 2.0   # division, his sharpest blade
+    # "To lead astray, IF POSSIBLE, even the elect" (Matt 24:24): each
+    # tribulation tick every remnant member faces this apostasy chance,
+    # shielded by formation — 20% base becomes 2%/tick for the deeply
+    # formed and 10%/tick for the barely formed. The elect stand; the
+    # middle is sifted. The seed-bearer cannot fall.
+    tribulation_apostasy: float = 0.20
 
     # --- endings (state-only, no dates) ---
     consummation_distance: float = 0.96  # sustained global distance => collapse

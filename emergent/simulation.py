@@ -198,6 +198,17 @@ class EmergentSimulation:
             pop.born[falling] = False
             counters["apostasies"] = int(falling.sum())
 
+        # In the tribulation, deception rises to lead astray — if
+        # possible — even the elect (Matt 24:24): every remnant member
+        # faces a per-tick apostasy chance shielded only by formation.
+        if self.falling_away_tick is not None and self.ending is None:
+            p_trib = cfg.tribulation_apostasy * (1.0 - pop.formation)
+            led_astray = (remnant & ~pop.seed
+                          & (rng.random(pop.capacity) < p_trib))
+            if led_astray.any():
+                pop.born[led_astray] = False
+                counters["apostasies"] += int(led_astray.sum())
+
         # ---- 5. martyrdom under persecution ---------------------------
         visible = remnant & (pop.formation > 0.6)
         p_mart = cfg.martyr_rate * env.persecution[reg]
