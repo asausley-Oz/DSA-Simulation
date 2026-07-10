@@ -283,6 +283,30 @@ class EmergentConfig:
     atonement_faith_delusion: float = 0.50     # retroactive light per stored faith
     martyr_faith_weight: float = 2.0           # martyrs weigh double in the store
 
+    # --- patience and the great falling away (2 Pet 3:9, 2 Thess 2) ---
+    # After the atonement the end is HELD OPEN as long as the world is
+    # still responding — the Lord is patient, not willing that any
+    # should perish. Response is measured as the harvest rate among the
+    # still-unconverted. When that rate stays dry for a long season in a
+    # world that has not been won, patience is exhausted and the great
+    # falling away fires ONCE: the lukewarm fall (the love of many grows
+    # cold), strong delusion is sent on those who refused the truth
+    # (2 Thess 2:11), and the adversary is released for a little while
+    # (Rev 20:3). Then the end comes swiftly.
+    patience: bool = True
+    patience_response_floor: float = 0.003  # harvest rate that still counts
+    patience_dry_ticks: int = 25             # the dry season that exhausts it
+    patience_remnant_ceiling: float = 0.50   # a won world is fullness, not dryness
+    falling_away_formation_bar: float = 0.50  # the lukewarm fall
+    strong_delusion: float = 0.25             # sent on those who refused
+    restrainer_removed: float = 0.10          # lawlessness unveiled (2 Thess 2:7)
+    adversary_release_factor: float = 0.85    # loosed for a little while
+    # The tribulation does not end gradually — those days are cut short
+    # for the sake of the elect (Matt 24:22): after this many ticks of
+    # endurance past the falling away, the PAROUSIA ends the world with
+    # the remnant vindicated. (Relative to an emergent event, no date.)
+    parousia_after: int = 60
+
     # --- endings (state-only, no dates) ---
     consummation_distance: float = 0.96  # sustained global distance => collapse
     consummation_remnant_floor: float = 0.005  # remnant share extinction

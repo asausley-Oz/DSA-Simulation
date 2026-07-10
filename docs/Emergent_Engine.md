@@ -378,6 +378,39 @@ pressure and relax when it fades, so empire status is a pressure
 equilibrium, not a one-way ratchet: empires crumble when the system that
 made them starves.
 
+## Patience and the great falling away (v7.8)
+
+**Patience (2 Pet 3:9).** After the atonement the end is held open —
+consummation cannot complete — as long as the world is still
+responding, measured as the harvest rate among the still-unconverted.
+A world already won (remnant ≥ 50%) is fullness, not dryness; patience
+is never exhausted by having little field left.
+
+**The great falling away (2 Thess 2).** When the harvest stays dry
+through a long season in a world that has not been won, patience is
+exhausted and the apostasy fires once: the lukewarm remnant falls (the
+love of many grows cold), strong delusion is sent on those who refused
+to love the truth (2:11), the restrainer is removed (distance jumps —
+lawlessness unveiled, 2:7), and the adversary is released for a little
+while (Rev 20:3). After the falling away the verdict is in: gradual
+renewal is no longer possible.
+
+**Parousia (Matt 24:22).** The tribulation does not end gradually —
+those days are cut short for the sake of the elect. After a bounded
+endurance past the falling away (relative to the emergent event, not a
+calendar), the world ends in a fourth way: the enduring remnant
+vindicated, the lawless one destroyed by the appearance of His coming.
+
+A complete falling-away arc from one history: incarnation 259 →
+deicide 269 → atonement (record cancelled 81%) → response dries →
+falling away 293 (343 grow cold) → tribulation → parousia 353,
+enduring remnant 37% vindicated.
+
+Ensemble (100 seeds, 800 ticks): **79% renewal / 12% consummation /
+9% parousia**, zero unresolved. The seed endures in every consummated
+and every parousia world. Our own world, per CDT, reads as a history
+inside the patience window — the contest deliberately held open.
+
 ## Endings are attractors, not appointments
 
 There is no `year >= 2030` check. A run terminates only when a state

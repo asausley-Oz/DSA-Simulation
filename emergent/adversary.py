@@ -42,6 +42,7 @@ class Adversary:
         self.power = 0.20
         self.exposure = 0.0     # how thoroughly he has been named
         self.disarmed = False   # set by the atonement
+        self.released = False   # loosed for a little while (Rev 20:3)
         self.deicide_urge = 0.0  # the compulsion he cannot resist
         self.cooldowns = {"quench": 0, "gild": 0, "schism": 0,
                           "accuse": 0, "incite": 0}
@@ -73,7 +74,9 @@ class Adversary:
                   * float(agg["empire_share"] @ pop_w))
         target = np.clip(breach, 0.0, 1.0) \
             * (1.0 - cfg.adversary_exposure_damp * self.exposure)
-        if self.disarmed:
+        if self.released:
+            target *= cfg.adversary_release_factor  # his short, final rage
+        elif self.disarmed:
             target *= cfg.adversary_disarmed_factor
         self.power += cfg.adversary_power_relax * (target - self.power)
         self.power = float(np.clip(self.power, 0.0, 1.0))

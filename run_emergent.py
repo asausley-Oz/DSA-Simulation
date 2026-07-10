@@ -95,6 +95,7 @@ def plot_run(history, events, env_names, out_dir: Path):
               "schism": "tab:orange", "hardening": "black",
               "scheme": "tab:purple", "incarnation": "deepskyblue",
               "deicide": "darkred", "atonement": "navy",
+              "falling_away": "saddlebrown", "parousia": "cyan",
               "consummation": "dimgray", "renewal": "gold"}
     if not events.empty:
         region_order = list(env_names) + ["GLOBAL"]
@@ -158,7 +159,7 @@ def main():
         if not args.no_plots:
             fig, axes = plt.subplots(1, 3, figsize=(16, 5))
             colors = {"consummation": "tab:red", "renewal": "gold",
-                      "contested": "tab:blue"}
+                      "contested": "tab:blue", "parousia": "cyan"}
 
             counts = df["outcome"].value_counts()
             axes[0].bar(counts.index, counts.values,

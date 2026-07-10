@@ -44,6 +44,13 @@ class EmergentSimulation:
         # The store of faith: every believer who lives and dies before
         # the atonement is counted into the covering (Heb 11:39-40).
         self.faith_store = 0.0
+        # Patience (2 Pet 3:9): post-atonement, the end is held open
+        # while the world still responds. Exhausted patience ends in
+        # the great falling away (2 Thess 2).
+        self.patience_active = False
+        self.falling_away_tick: Optional[int] = None
+        self._harvest_ema = 0.0
+        self._dry_streak = 0
         self._ending_streak = {"consummation": 0, "renewal": 0}
 
     # ------------------------------------------------------------------
@@ -258,6 +265,10 @@ class EmergentSimulation:
         if (cfg.enable_atonement and self.incarnation_tick is None):
             self._check_incarnation(agg_after)
 
+        # ---- 7c. patience and the great falling away -------------------
+        if self.patience_active:
+            self._update_patience(agg_after, counters["conversions"])
+
         # ---- 8. record ---------------------------------------------
         pop_total = agg_after["pop"].sum()
         weights = agg_after["pop"] / max(pop_total, 1.0)
@@ -395,12 +406,67 @@ class EmergentSimulation:
 
         self.atonement_tick = self.tick
         self.incarnation_region = None
+        # The patience of God begins: the end held open for response.
+        if self.cfg.patience:
+            self.patience_active = True
         env.events.append({
             "tick": self.tick, "region": env.names[vessel],
             "type": "atonement",
             "detail": (f"sprung by {cause}; store of faith "
                        f"{self.faith_store:.2f} -> record cancelled "
                        f"{clear:.0%}, light {light:.2f}")})
+
+    def _update_patience(self, agg: dict, conversions: int):
+        """The end is held open while the world still responds. When the
+        harvest dries in a world that has not been won, patience is
+        exhausted — and the great falling away comes (2 Thess 2)."""
+        cfg, pop, env = self.cfg, self.pop, self.env
+
+        # Harvest rate among the still-unconverted field.
+        field = np.count_nonzero(pop.alive & ~pop.born & ~pop.empire)
+        rate = conversions / max(field, 1)
+        self._harvest_ema += 0.1 * (rate - self._harvest_ema)
+
+        pop_total = agg["pop"].sum()
+        remnant_share = float(
+            (agg["remnant_share"] * agg["pop"]).sum() / max(pop_total, 1.0))
+
+        # A won world is fullness, not dryness — patience is not
+        # exhausted by having little field left to harvest.
+        if remnant_share >= cfg.patience_remnant_ceiling:
+            self._dry_streak = 0
+            return
+        if self._harvest_ema < cfg.patience_response_floor:
+            self._dry_streak += 1
+        else:
+            self._dry_streak = 0
+        if self._dry_streak < cfg.patience_dry_ticks:
+            return
+
+        # --- THE GREAT FALLING AWAY --------------------------------
+        self.patience_active = False
+        self.falling_away_tick = self.tick
+        # The love of many grows cold: the lukewarm fall away.
+        lukewarm = (pop.alive & pop.born & ~pop.seed
+                    & (pop.formation < cfg.falling_away_formation_bar))
+        n_fallen = int(lukewarm.sum())
+        pop.born[lukewarm] = False
+        # Strong delusion sent on those who refused to love the truth.
+        refused = pop.alive & ~pop.born
+        pop.delusion[refused] = np.clip(
+            pop.delusion[refused] + cfg.strong_delusion, 0.0, 1.0)
+        # The restrainer removed — lawlessness unveiled (2 Thess 2:7).
+        env.distance = np.clip(env.distance + cfg.restrainer_removed,
+                               0.0, 1.0)
+        # The adversary released for a little while (Rev 20:3).
+        if self.adversary is not None:
+            self.adversary.released = True
+        env.events.append({
+            "tick": self.tick, "region": "GLOBAL",
+            "type": "falling_away",
+            "detail": (f"patience exhausted after {cfg.patience_dry_ticks} "
+                       f"dry ticks; {n_fallen} grow cold, strong delusion "
+                       "sent, the adversary loosed for a little while")})
 
     def _check_endings(self, row: dict):
         """State-only terminal attractors on covenant distance. No dates.
@@ -416,6 +482,10 @@ class EmergentSimulation:
             self._ending_streak["consummation"] += 1
         else:
             self._ending_streak["consummation"] = 0
+        # The patience of God: while the world still responds, the end
+        # is held open — consummation cannot complete (2 Pet 3:9).
+        if self.patience_active:
+            self._ending_streak["consummation"] = 0
 
         # Renewal lands AT the ratchet floor, never beneath it: the
         # ceiling rises with the accumulated weight of history, so a
@@ -428,6 +498,25 @@ class EmergentSimulation:
             self._ending_streak["renewal"] += 1
         else:
             self._ending_streak["renewal"] = 0
+        # After the great falling away the verdict is in: the remaining
+        # arc is tribulation, not gradual renewal (2 Thess 2:8) — and
+        # the tribulation is cut short for the sake of the elect
+        # (Matt 24:22): the Parousia ends it with the remnant vindicated.
+        if self.falling_away_tick is not None:
+            self._ending_streak["renewal"] = 0
+            if (self.ending is None and
+                    self.tick - self.falling_away_tick
+                    >= cfg.parousia_after):
+                self.ending = "parousia"
+                self.env.events.append({
+                    "tick": self.tick, "region": "GLOBAL",
+                    "type": "parousia",
+                    "detail": (f"the days cut short for the elect — "
+                               f"enduring remnant "
+                               f"{row['remnant_share']:.3f} vindicated, "
+                               f"the lawless one destroyed by the "
+                               "appearance of His coming")})
+                return
 
         sustain = {"consummation": cfg.consummation_sustain_ticks,
                    "renewal": cfg.renewal_sustain_ticks}
@@ -488,6 +577,8 @@ class EmergentSimulation:
             "seed_passes": self.pop.seed_passes,
             "seed_raised": self.pop.seed_raised,
             "seed_endures": bool((self.pop.alive & self.pop.seed).any()),
+            "falling_away_tick": self.falling_away_tick,
+            "patience_open": self.patience_active,
             "schemes_run": (dict(self.adversary.schemes_run)
                             if self.adversary else {}),
             "events_by_type": by_type,
