@@ -47,6 +47,59 @@ def run_ensemble(base: EmergentConfig, n_seeds: int = 100,
     return df
 
 
+def run_grid(base: EmergentConfig,
+             param_x: str, values_x, param_y: str, values_y,
+             seeds_per_cell: int = 8, workers: int = None,
+             verbose: bool = True) -> pd.DataFrame:
+    """2-D parameter grid, a small ensemble per cell. Returns one row per
+    run, tagged with the cell's parameter values."""
+    workers = workers or max(1, (os.cpu_count() or 2) - 1)
+    jobs, tags = [], []
+    for vx in values_x:
+        for vy in values_y:
+            cfg = dataclasses.replace(base, **{param_x: vx, param_y: vy})
+            for s in range(seeds_per_cell):
+                jobs.append((cfg, 1000 + s))
+                tags.append((vx, vy))
+    rows = []
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        for i, row in enumerate(pool.map(_run_one, jobs)):
+            row[param_x], row[param_y] = tags[i]
+            rows.append(row)
+            if verbose and (i + 1) % 40 == 0:
+                print(f"  {i + 1}/{len(jobs)} grid runs complete")
+    df = pd.DataFrame(rows)
+    df["outcome"] = df["ending"].str.replace(
+        r"contested.*", "contested", regex=True)
+    return df
+
+
+def run_phase_lines(base: EmergentConfig, sweeps: dict,
+                    seeds_per_value: int = 10, workers: int = None,
+                    verbose: bool = True) -> pd.DataFrame:
+    """1-D sweeps over several parameters — where does each tip the
+    balance between renewal and consummation?"""
+    workers = workers or max(1, (os.cpu_count() or 2) - 1)
+    jobs, tags = [], []
+    for param, values in sweeps.items():
+        for v in values:
+            cfg = dataclasses.replace(base, **{param: v})
+            for s in range(seeds_per_value):
+                jobs.append((cfg, 2000 + s))
+                tags.append((param, v))
+    rows = []
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        for i, row in enumerate(pool.map(_run_one, jobs)):
+            row["parameter"], row["value"] = tags[i]
+            rows.append(row)
+            if verbose and (i + 1) % 50 == 0:
+                print(f"  {i + 1}/{len(jobs)} sweep runs complete")
+    df = pd.DataFrame(rows)
+    df["outcome"] = df["ending"].str.replace(
+        r"contested.*", "contested", regex=True)
+    return df
+
+
 def summarize_ensemble(df: pd.DataFrame) -> str:
     lines = ["Outcome distribution:"]
     counts = df["outcome"].value_counts()

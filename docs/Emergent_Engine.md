@@ -154,6 +154,44 @@ Renewal's distance ceiling rises with the ratchet floor
 scars with it — rather than being locked out by its own accumulated
 history.
 
+## Eschatological cartography
+
+`python run_emergent.py --cartography` sweeps a 2-D grid
+(witness_contact_rate × nearness_pull, 8 seeds/cell) plus 1-D phase
+lines over five theology-laden knobs (nearness_pull,
+witness_contact_rate, revival_ignition_prob, ratchet_rate, bent, 10
+seeds/value). Findings under the default configuration (read trends,
+not single cells — 8–10 seeds gives ±15pp noise per point):
+
+1. **The model leans hopeful.** Renewal is the modal outcome (~50–75%)
+   across nearly the whole explored space; consummation is a robust
+   minority fate that almost never vanishes. Broadly: renewal within
+   history is normal, collapse is always possible.
+2. **Revival count mediates everything.** Whatever knob is turned,
+   renewal share tracks mean revivals-per-history almost linearly
+   (~25% at 9 revivals → ~100% at 32). Awakening frequency is the
+   proximate cause of every renewal; the knobs only matter through it.
+3. **The ratchet is the strongest doom knob.** Raising ratchet_rate
+   (how much of each act of rebellion permanently sticks) from 0.10 to
+   0.40 collapses renewal from ~80% to ~50% and raises consummation
+   from ~0% to ~50–60% — the clearest monotone signal in the sweep.
+   Notably, `bent` (the depth of the rebellion pressure itself) shows
+   no comparable effect. What damns worlds in this model is not how
+   bent people are but how much of the curse is never cleared. The
+   engine currently has NO atonement mechanism (ratchet_decay ≈ 0);
+   the cartography is, in effect, pointing at the missing
+   Christological term.
+4. **The nearness U-shape (tentative).** Renewal is high at weak pull
+   (~90%) and strong pull (~80%) but dips to ~50% at the middle. This
+   is consistent with the comfort trap: weak grace keeps worlds
+   poor-but-receptive, strong grace carries them through the rot, and
+   moderate grace produces exactly enough golden age to secularize —
+   the Beatitude paradox surfacing at the level of providence.
+5. **Providence beats tuning in the mid-range.** Within the central
+   region of parameter space, seed-to-seed variance dwarfs parameter
+   effects: which history a world gets matters more than any modest
+   doctrinal re-tuning of its physics.
+
 ## State variables (per region, all endogenous)
 
 | Variable | Raised by | Lowered by |

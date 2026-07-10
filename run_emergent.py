@@ -22,7 +22,8 @@ import matplotlib.pyplot as plt
 
 from emergent import EmergentConfig, EmergentSimulation
 from emergent.analysis import run_sensitivity
-from emergent.ensemble import run_ensemble, summarize_ensemble
+from emergent.ensemble import (run_ensemble, run_grid, run_phase_lines,
+                               summarize_ensemble)
 
 
 def plot_run(history, events, env_names, out_dir: Path):
@@ -130,6 +131,9 @@ def main():
                         help="run one-factor-at-a-time parameter sweeps")
     parser.add_argument("--ensemble", type=int, default=0, metavar="N",
                         help="run N seeds in parallel and map outcomes")
+    parser.add_argument("--cartography", action="store_true",
+                        help="map the eschatological parameter space: "
+                             "grid + phase lines over theology-laden knobs")
     parser.add_argument("--no-plots", action="store_true")
     args = parser.parse_args()
 
@@ -186,6 +190,91 @@ def main():
             fig.savefig(ppath, dpi=130)
             plt.close(fig)
             print(f"Saved plot: {ppath}")
+        return
+
+    if args.cartography:
+        print("Mapping the eschatological parameter space...\n")
+
+        # --- 2-D grid: human witness x divine pull ---------------------
+        gx, gy = "witness_contact_rate", "nearness_pull"
+        vx = [0.10, 0.17, 0.24, 0.31, 0.38]
+        vy = [0.025, 0.035, 0.045, 0.055, 0.065]
+        print(f"Grid: {gx} x {gy} ({len(vx)}x{len(vy)} cells x 8 seeds)")
+        grid = run_grid(cfg, gx, vx, gy, vy, seeds_per_cell=8)
+        grid.to_csv(out_dir / "eschatology_grid.csv", index=False)
+
+        # --- phase lines over theology-laden knobs ---------------------
+        sweeps = {
+            "nearness_pull": [0.025, 0.035, 0.045, 0.055, 0.065],
+            "witness_contact_rate": [0.10, 0.17, 0.24, 0.31, 0.38],
+            "revival_ignition_prob": [0.04, 0.08, 0.12, 0.20, 0.30],
+            "ratchet_rate": [0.10, 0.16, 0.22, 0.30, 0.40],
+            "bent": [0.004, 0.005, 0.006, 0.007, 0.008],
+        }
+        print("Phase lines: 5 parameters x 5 values x 10 seeds")
+        lines = run_phase_lines(cfg, sweeps, seeds_per_value=10)
+        lines.to_csv(out_dir / "eschatology_lines.csv", index=False)
+
+        # --- render -----------------------------------------------------
+        fig = plt.figure(figsize=(16, 9))
+        gs = fig.add_gridspec(2, 5, height_ratios=[1.4, 1])
+
+        ax = fig.add_subplot(gs[0, :2])
+        pivot = (grid.assign(renew=(grid["outcome"] == "renewal"))
+                 .groupby([gy, gx])["renew"].mean().unstack())
+        im = ax.imshow(pivot.values * 100, origin="lower", cmap="RdYlGn",
+                       vmin=0, vmax=100, aspect="auto")
+        ax.set_xticks(range(len(vx)), [str(v) for v in vx])
+        ax.set_yticks(range(len(vy)), [str(v) for v in vy])
+        ax.set_xlabel("witness_contact_rate (human witness)")
+        ax.set_ylabel("nearness_pull (divine counter-movement)")
+        ax.set_title("Renewal share (%): witness x nearness")
+        for i in range(len(vy)):
+            for j in range(len(vx)):
+                ax.text(j, i, f"{pivot.values[i, j]*100:.0f}",
+                        ha="center", va="center", fontsize=9)
+        fig.colorbar(im, ax=ax, shrink=0.8)
+
+        ax = fig.add_subplot(gs[0, 2:])
+        med = grid.groupby([gx, gy]).agg(
+            renew=("outcome", lambda s: (s == "renewal").mean()),
+            revivals=("n_revivals", "mean")).reset_index()
+        ax.scatter(med["revivals"], med["renew"] * 100, c=med[gy],
+                   cmap="viridis", s=60)
+        ax.set_xlabel("mean revivals per history (cell average)")
+        ax.set_ylabel("renewal share (%)")
+        ax.set_title("Revival frequency vs. final outcome "
+                     "(color = nearness_pull)")
+        ax.grid(alpha=0.3)
+
+        for k, (param, values) in enumerate(sweeps.items()):
+            ax = fig.add_subplot(gs[1, k])
+            sub = lines[lines["parameter"] == param]
+            stats = sub.groupby("value")["outcome"].value_counts(
+                normalize=True).unstack(fill_value=0)
+            for outcome, color in [("renewal", "gold"),
+                                   ("consummation", "tab:red"),
+                                   ("contested", "tab:blue")]:
+                if outcome in stats:
+                    ax.plot(stats.index, stats[outcome] * 100, "o-",
+                            color=color, label=outcome)
+            ax.axvline(getattr(cfg, param), color="gray", ls=":", lw=1)
+            ax.set_title(param, fontsize=9)
+            ax.set_ylim(-5, 105)
+            ax.grid(alpha=0.3)
+            if k == 0:
+                ax.set_ylabel("share of histories (%)")
+                ax.legend(fontsize=7)
+
+        fig.suptitle("DSA v7 — eschatological cartography "
+                     "(dotted line = current default)", fontsize=14)
+        fig.tight_layout(rect=[0, 0, 1, 0.95])
+        ppath = out_dir / "eschatology_map.png"
+        fig.savefig(ppath, dpi=130)
+        plt.close(fig)
+
+        print(f"\nSaved: {out_dir/'eschatology_grid.csv'}, "
+              f"{out_dir/'eschatology_lines.csv'}, {ppath}")
         return
 
     if args.sensitivity:
