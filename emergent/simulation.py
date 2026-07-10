@@ -49,6 +49,7 @@ class EmergentSimulation:
         # the great falling away (2 Thess 2).
         self.patience_active = False
         self.falling_away_tick: Optional[int] = None
+        self.tribulation_martyrs = 0   # the souls under the altar (Rev 6:9)
         self._harvest_ema = 0.0
         self._dry_streak = 0
         self._ending_streak = {"consummation": 0, "renewal": 0}
@@ -207,12 +208,23 @@ class EmergentSimulation:
             counters["martyrs"] = int(martyred.sum())
             m_count = np.bincount(reg[martyred], minlength=n_regions)
             martyr_share = m_count / np.maximum(agg["pop"], 1.0)
-            env.martyr_seed(martyr_share * 50.0)
-            # Martyrdom is exposure that cannot be argued with: delusion
-            # breaks across the whole region where the blood falls.
-            m_break = (cfg.martyr_delusion_break * martyr_share * 50.0)[reg]
-            pop.delusion[alive] = np.clip(
-                pop.delusion[alive] - m_break[alive], 0.0, 1.0)
+            in_tribulation = (self.falling_away_tick is not None
+                              and cfg.tribulation_martyr_mute)
+            if in_tribulation:
+                # Rev 13:7 — it is given to him to conquer the saints:
+                # in the tribulation the martyr seed is muted. The blood
+                # falls on ground held by strong delusion and bears no
+                # fruit until the vindication. The souls wait under the
+                # altar (Rev 6:9).
+                self.tribulation_martyrs += counters["martyrs"]
+            else:
+                env.martyr_seed(martyr_share * 50.0)
+                # Martyrdom is exposure that cannot be argued with:
+                # delusion breaks across the region where the blood falls.
+                m_break = (cfg.martyr_delusion_break
+                           * martyr_share * 50.0)[reg]
+                pop.delusion[alive] = np.clip(
+                    pop.delusion[alive] - m_break[alive], 0.0, 1.0)
             # Martyrs weigh double in the store of faith.
             if self.atonement_tick is None:
                 self.faith_store += (cfg.martyr_faith_weight
@@ -514,8 +526,10 @@ class EmergentSimulation:
                     "detail": (f"the days cut short for the elect — "
                                f"enduring remnant "
                                f"{row['remnant_share']:.3f} vindicated, "
-                               f"the lawless one destroyed by the "
-                               "appearance of His coming")})
+                               f"{self.tribulation_martyrs} souls under "
+                               f"the altar answered, the lawless one "
+                               "destroyed by the appearance of His "
+                               "coming")})
                 return
 
         sustain = {"consummation": cfg.consummation_sustain_ticks,

@@ -306,6 +306,16 @@ class EmergentConfig:
     # endurance past the falling away, the PAROUSIA ends the world with
     # the remnant vindicated. (Relative to an emergent event, no date.)
     parousia_after: int = 60
+    # --- the great tribulation: the greatest tax on the remnant ---
+    # Between the falling away and the parousia, it is given to him to
+    # make war on the saints and to conquer them (Rev 13:7): the martyr
+    # seed is MUTED — the blood falls on ground held by strong delusion
+    # and bears no fruit until the vindication. His movements strike
+    # harder, and division — brother betraying brother (Matt 24:10) —
+    # becomes his sharpest blade.
+    tribulation_martyr_mute: bool = True
+    tribulation_scheme_boost: float = 1.6   # his movements strike harder
+    tribulation_schism_bonus: float = 2.0   # division, his sharpest blade
 
     # --- endings (state-only, no dates) ---
     consummation_distance: float = 0.96  # sustained global distance => collapse

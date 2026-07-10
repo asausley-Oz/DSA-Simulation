@@ -87,6 +87,11 @@ class Adversary:
         env.vamphoric = np.clip(
             env.vamphoric + cfg.adversary_vamphoric_gain * self.power,
             0.0, 1.0)
+        # Released, he makes war on the saints directly (Rev 13:7) —
+        # the minority damper no longer shields a large remnant.
+        if self.released:
+            env.persecution = np.clip(
+                env.persecution + 0.03 * self.power, 0.0, 1.0)
 
         # --- the embodied presence: the compulsion he cannot resist ----
         if incarnate_region is not None:
@@ -112,7 +117,11 @@ class Adversary:
             self.cooldowns[k] = max(0, self.cooldowns[k] - 1)
 
         # --- scheme selection: targeted, prioritized -------------------
-        if self.rng.random() >= cfg.adversary_scheme_prob * self.power:
+        # Released, he rages at a faster cadence — he knows his time is
+        # short (Rev 12:12).
+        scheme_p = cfg.adversary_scheme_prob * self.power \
+            * (cfg.tribulation_scheme_boost if self.released else 1.0)
+        if self.rng.random() >= scheme_p:
             return events, accuse_region, False
 
         scheme = None
@@ -154,7 +163,10 @@ class Adversary:
 
         kind, r = scheme
         self.schemes_run[kind] += 1
-        strength = self.power
+        # In the tribulation his movements strike harder — it is given
+        # to him, for a little while (Rev 13:7).
+        strength = self.power * (cfg.tribulation_scheme_boost
+                                 if self.released else 1.0)
 
         if kind == "quench":
             env.revival_tension[r] *= (1.0 - 0.65 * strength)
@@ -168,10 +180,15 @@ class Adversary:
             self.cooldowns["gild"] = 25
             detail = "golden chains — comfort for the strong church"
         elif kind == "schism":
+            # Division is his sharpest blade in the tribulation:
+            # brother betrays brother (Matt 24:10).
+            div = cfg.tribulation_schism_bonus if self.released else 1.0
             env.unity[r] = max(
-                0.05, env.unity[r] - cfg.schism_scheme_unity_cost * strength)
-            env.schism_pressure[r] += cfg.schism_scheme_pressure * strength
-            self.cooldowns["schism"] = 22
+                0.05, env.unity[r]
+                - cfg.schism_scheme_unity_cost * strength * div)
+            env.schism_pressure[r] += (cfg.schism_scheme_pressure
+                                       * strength * div)
+            self.cooldowns["schism"] = 12 if self.released else 22
             detail = "brothers set against brothers — division sown"
         elif kind == "accuse":
             accuse_region = r

@@ -401,10 +401,26 @@ endurance past the falling away (relative to the emergent event, not a
 calendar), the world ends in a fourth way: the enduring remnant
 vindicated, the lawless one destroyed by the appearance of His coming.
 
+**The tribulation tax (v7.9).** Between the falling away and the
+parousia, the tribulation is the greatest tax the remnant ever pays:
+
+- **The martyr seed is muted** (Rev 13:7 — it is given to him to
+  conquer the saints): the blood falls on ground held by strong
+  delusion and bears no fruit until the vindication. The souls wait
+  under the altar (Rev 6:9), counted and answered at the parousia.
+- **He makes war on the saints directly**: released, his persecution
+  bypasses the minority damper — a large remnant no longer shields
+  itself by its size (~110 martyrs per tribulation, up from near zero).
+- **His movements strike harder and faster** (Rev 12:12 — he knows his
+  time is short): scheme force and cadence are boosted, and division —
+  brother betraying brother (Matt 24:10) — becomes his sharpest blade,
+  with doubled schism force on a short cooldown.
+
 A complete falling-away arc from one history: incarnation 259 →
 deicide 269 → atonement (record cancelled 81%) → response dries →
-falling away 293 (343 grow cold) → tribulation → parousia 353,
-enduring remnant 37% vindicated.
+falling away 293 (343 grow cold) → tribulation (martyr seed muted,
+war on the saints) → parousia 353, enduring remnant vindicated and
+the souls under the altar answered.
 
 Ensemble (100 seeds, 800 ticks): **79% renewal / 12% consummation /
 9% parousia**, zero unresolved. The seed endures in every consummated
