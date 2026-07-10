@@ -108,11 +108,51 @@ the two doors of turning:
 When a region's delusion crosses 0.85 a **hardening** event is logged:
 the drain now runs undetected. Hardened regions can pass through entire
 crisis epochs without revival — which changes the diagnosis of doomed
-histories. Across seeds, worlds that end in consummation die with high
-delusion (~0.55+, hardening events shortly before the end), worlds that
-reach renewal die to the lie first (delusion → ~0.05), and contested
-worlds oscillate in between. The doomed runs are no longer "too late" —
-they are blind.
+histories. The doomed runs are no longer "too late" — they are blind.
+
+## v7.3: delusion moves onto the agents
+
+Delusion is now a **per-agent** variable, not a regional field:
+
+- **Inherited**: children start inside their parents' frame, blended
+  with the ambient culture (`delusion_inheritance`). Blindness is
+  raised, not chosen — structural, generational.
+- **Grown**: by the vamphoric and comfort systems around each person,
+  dampened by their own formation.
+- **Broken person-to-person**: each tick an agent may encounter a
+  witness (probability ∝ √deep-remnant-share); one conversation that
+  names the drain and the fork shatters a large block of delusion.
+  Martyrdom breaks it region-wide; crisis and revival expose ambiently.
+- **Conversion gates per person**: revivals sweep those who can see and
+  leave a hardened core behind — repeated revivals in one region show
+  diminishing returns unless witness contact keeps cutting.
+
+The regional "delusion" the environment reads is simply the population
+mean; hardening events fire on it as before.
+
+## The outcome landscape (ensemble mode)
+
+`python run_emergent.py --ensemble 100` runs 100 seeds in parallel and
+maps the distribution of histories — the falsifiable object is the
+distribution, not any single run. Under default parameters:
+
+- **~57% renewal** (median resolution tick ~443; final delusion ~0.02;
+  ~34 revivals per history)
+- **~36% consummation** (median tick ~265; final delusion ~0.32;
+  **0.2 revivals on average** — doomed worlds essentially never ignite)
+- **~7% contested** at the 600-tick limit
+
+The landscape is **bimodal**: final states cluster at
+(low delusion, high remnant) or (high delusion, low remnant) with a void
+between — no world ends lukewarm. The two endings also separate cleanly
+in time: consummations all resolve early (~250–290), renewals late
+(~390–600). The fork in every history is whether the first revival wave
+ignites before the first great collapse completes.
+
+Renewal's distance ceiling rises with the ratchet floor
+(`floor + 0.08`), so a late-age world can still renew — carrying its
+scars with it — rather than being locked out by its own accumulated
+history.
 
 ## State variables (per region, all endogenous)
 

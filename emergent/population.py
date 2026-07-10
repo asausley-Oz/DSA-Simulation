@@ -29,6 +29,7 @@ class Population:
         self.born = np.zeros(capacity, dtype=bool)    # born-from-above
         self.empire = np.zeros(capacity, dtype=bool)  # fully captured agents
         self.martyr = np.zeros(capacity, dtype=bool)  # died as martyr
+        self.delusion = np.zeros(capacity, dtype=np.float64)  # personal blindness
 
         # Regional carrying capacities, fixed from the initial seeding.
         self.region_capacity = np.zeros(n_regions, dtype=np.int64)
@@ -56,6 +57,8 @@ class Population:
             self.agency[sl] = rng.uniform(0.6, 1.0, count)
             self.pride[sl] = rng.beta(2, 5, count)
             self.born[sl] = rng.random(count) < init.born_rate
+            self.delusion[sl] = np.clip(
+                rng.normal(0.30, 0.12, count), 0.0, 0.9)
             idx += count
 
             self.region_capacity[r] = int(count * cfg.capacity_factor)
@@ -95,6 +98,11 @@ class Population:
             reg, weights=np.where(remnant_mask, self.formation, 0.0),
             minlength=n_regions)
 
+        # Regional mean delusion — the ambient blindness of the culture.
+        del_sum = np.bincount(
+            reg, weights=np.where(alive, self.delusion, 0.0),
+            minlength=n_regions)
+
         return {
             "pop": pop,
             "remnant_share": remnant / safe_pop,
@@ -102,6 +110,7 @@ class Population:
             "labor_share": labor / safe_pop,
             "deep_share": deep / safe_pop,
             "remnant_formation": rem_form_sum / np.maximum(remnant, 1.0),
+            "delusion": del_sum / safe_pop,
         }
 
     def voltage(self) -> np.ndarray:
@@ -156,6 +165,10 @@ class Population:
                                weights=self.formation[alive],
                                minlength=n_regions)
         region_mean = form_sum / np.maximum(pop, 1)
+        del_sum = np.bincount(self.region[alive],
+                              weights=self.delusion[alive],
+                              minlength=n_regions)
+        region_mean_del = del_sum / np.maximum(pop, 1)
 
         # Assign regions to slots according to per-region birth counts.
         birth_regions = np.repeat(np.arange(n_regions), n_births)[:total]
@@ -163,6 +176,7 @@ class Population:
         # Each child gets a random living "parent" from its region.
         parent_form = np.empty(total)
         parent_born = np.zeros(total, dtype=bool)
+        parent_delusion = np.full(total, 0.3)
         for r in range(n_regions):
             mask = birth_regions == r
             k = int(mask.sum())
@@ -178,6 +192,7 @@ class Population:
                 parents = rng.choice(candidates, size=k, p=pw)
                 parent_form[mask] = self.formation[parents]
                 parent_born[mask] = self.born[parents]
+                parent_delusion[mask] = self.delusion[parents]
             else:
                 parent_form[mask] = region_mean[r]
 
@@ -209,6 +224,12 @@ class Population:
         self.born[slots] = child_born
         self.empire[slots] = False
         self.martyr[slots] = False
+        # Blindness is raised, not chosen: children start inside their
+        # parents' frame, blended with the ambient culture's.
+        w_d = cfg.delusion_inheritance
+        self.delusion[slots] = np.clip(
+            w_d * parent_delusion + (1 - w_d) * region_mean_del[birth_regions]
+            + rng.normal(0, 0.05, total), 0.0, 1.0)
         return total
 
     def migrate(self, attractiveness: np.ndarray,

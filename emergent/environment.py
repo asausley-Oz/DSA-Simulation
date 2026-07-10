@@ -51,7 +51,9 @@ class Environment:
         self.comfort = np.array([r.comfort for r in cfg.regions])
         self.receptivity = np.full(n, 0.25)
         self.persecution = np.zeros(n)
-        self.delusion = np.full(n, 0.30)   # Anti-Life Delusion level
+        # Delusion lives on the AGENTS (v7.3); this mirror holds the
+        # regional mean, refreshed each tick from population aggregates.
+        self.delusion = np.full(n, 0.30)
         self._hardened = np.zeros(n, dtype=bool)  # for hardening events
 
         # --- accumulators (the "pressure gauges" behind events) ---
@@ -185,21 +187,11 @@ class Environment:
                    - cfg.unity_erosion * self.comfort)
         self.unity = np.clip(self.unity + d_unity, 0.05, 1.0)
 
-        # --- delusion: the concealment of the dying ------------------
-        # Grows where vamphoric systems suppress awareness and where
-        # comfort makes the lie preferable. Suffering alone does NOT
-        # remove it — it yields only to exposure: the remnant naming the
-        # system, the light of revival, and the visible failure of the
-        # simulacra when crisis strikes.
-        d_delusion = (
-            cfg.delusion_growth_vamphoric * self.vamphoric
-            + cfg.delusion_growth_comfort * self.comfort
-            - cfg.delusion_exposure_witness
-            * np.sqrt(np.clip(agg["deep_share"], 0, 1))
-            - cfg.delusion_exposure_crisis * crisis
-            - cfg.delusion_exposure_revival * revival
-        )
-        self.delusion = np.clip(self.delusion + d_delusion, 0.0, 1.0)
+        # --- delusion: mirrored from the agents ----------------------
+        # Each agent carries their own blindness (grown, inherited, and
+        # broken person-by-person in the simulation layer); the region's
+        # ambient delusion is simply their mean.
+        self.delusion = agg["delusion"]
 
         # Hardening events: a region crossing deep blindness is logged —
         # the drain now runs undetected, and hardship will be misread.
@@ -346,9 +338,4 @@ class Environment:
             self.unity + cfg.martyr_unity_seed * martyr_share, 0.05, 1.0)
         self.nearness = np.clip(
             self.nearness + cfg.martyr_nearness_seed * martyr_share,
-            0.0, 1.0)
-        # Martyrdom is exposure that cannot be argued with: the system's
-        # true face is shown, and delusion breaks where the blood falls.
-        self.delusion = np.clip(
-            self.delusion - self.cfg.martyr_delusion_break * martyr_share,
             0.0, 1.0)

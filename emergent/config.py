@@ -117,14 +117,20 @@ class EmergentConfig:
     # hardened) — it breaks only under exposure: the remnant naming the
     # system, martyrdom's undeniable testimony, visible systemic failure,
     # and the light of revival. Awareness is the precondition of turning.
-    delusion_growth_vamphoric: float = 0.010  # systems suppress self-awareness
+    # Delusion is PER-AGENT (v7.3): each person carries their own
+    # blindness, inherited from the household they were raised in, grown
+    # by the systems around them, and broken one encounter at a time.
+    delusion_growth_vamphoric: float = 0.008  # systems suppress self-awareness
     delusion_growth_comfort: float = 0.005    # the comfortable lie, embraced
-    delusion_exposure_witness: float = 0.06   # deep remnant names the drain
-    delusion_exposure_crisis: float = 0.020   # the simulacra visibly fail
+    witness_contact_rate: float = 0.28   # chance/tick of meeting a witness
+    witness_break: float = 0.35          # delusion shattered by one encounter
+    delusion_exposure_crisis: float = 0.030   # the simulacra visibly fail
     delusion_exposure_revival: float = 0.06   # the Light exposes
+    delusion_formation_clarity: float = 0.015  # the formed see ever clearer
     martyr_delusion_break: float = 0.4        # testimony that cannot be unseen
     awareness_blindness_cap: float = 0.95     # complete blindness is possible
-    hardening_threshold: float = 0.85         # delusion level logged as event
+    hardening_threshold: float = 0.85         # regional mean logged as event
+    delusion_inheritance: float = 0.6         # raised inside the parents' frame
 
     # --- receptivity / conversion ---
     receptivity_relax: float = 0.10  # speed receptivity tracks its target

@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 
 from emergent import EmergentConfig, EmergentSimulation
 from emergent.analysis import run_sensitivity
+from emergent.ensemble import run_ensemble, summarize_ensemble
 
 
 def plot_run(history, events, env_names, out_dir: Path):
@@ -127,6 +128,8 @@ def main():
     parser.add_argument("--output", type=str, default="output")
     parser.add_argument("--sensitivity", action="store_true",
                         help="run one-factor-at-a-time parameter sweeps")
+    parser.add_argument("--ensemble", type=int, default=0, metavar="N",
+                        help="run N seeds in parallel and map outcomes")
     parser.add_argument("--no-plots", action="store_true")
     args = parser.parse_args()
 
@@ -135,6 +138,55 @@ def main():
 
     cfg = EmergentConfig(n_agents=args.agents, n_ticks=args.ticks,
                          seed=args.seed)
+
+    if args.ensemble:
+        print(f"Running {args.ensemble}-seed ensemble "
+              f"({cfg.n_agents} agents x {cfg.n_ticks} ticks each)...")
+        df = run_ensemble(cfg, n_seeds=args.ensemble)
+        path = out_dir / "emergent_ensemble.csv"
+        df.to_csv(path, index=False)
+        print()
+        print(summarize_ensemble(df))
+        print(f"\nSaved: {path}")
+
+        if not args.no_plots:
+            fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+            colors = {"consummation": "tab:red", "renewal": "gold",
+                      "contested": "tab:blue"}
+
+            counts = df["outcome"].value_counts()
+            axes[0].bar(counts.index, counts.values,
+                        color=[colors.get(o, "gray") for o in counts.index])
+            axes[0].set_title(f"Endings across {len(df)} histories")
+            axes[0].set_ylabel("runs")
+
+            for outcome, sub in df.groupby("outcome"):
+                axes[1].scatter(sub["final_delusion"],
+                                sub["final_remnant_share"] * 100,
+                                color=colors.get(outcome, "gray"),
+                                label=outcome, alpha=0.7)
+            axes[1].set_xlabel("final delusion (blindness)")
+            axes[1].set_ylabel("final remnant share (%)")
+            axes[1].set_title("Blind worlds die, seeing worlds renew")
+            axes[1].legend(fontsize=8)
+            axes[1].grid(alpha=0.3)
+
+            for outcome, sub in df.groupby("outcome"):
+                axes[2].hist(sub["ticks_run"], bins=20, alpha=0.6,
+                             color=colors.get(outcome, "gray"), label=outcome)
+            axes[2].set_xlabel("ticks until ending")
+            axes[2].set_title("When histories resolve")
+            axes[2].legend(fontsize=8)
+            axes[2].grid(alpha=0.3)
+
+            fig.suptitle("DSA v7 — outcome landscape (identical rules, "
+                         "different providence)", fontsize=13)
+            fig.tight_layout(rect=[0, 0, 1, 0.94])
+            ppath = out_dir / "emergent_ensemble.png"
+            fig.savefig(ppath, dpi=130)
+            plt.close(fig)
+            print(f"Saved plot: {ppath}")
+        return
 
     if args.sensitivity:
         print("Running sensitivity analysis (this launches many runs)...")

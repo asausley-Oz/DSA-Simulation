@@ -81,16 +81,41 @@ class EmergentSimulation:
         pop.formation[nominal] -= 0.002 * env.comfort[reg][nominal]
         np.clip(pop.formation, 0.0, 1.0, out=pop.formation)
 
+        # ---- 2b. delusion: personal blindness --------------------------
+        # Grows out of the systems around each person (dampened by their
+        # own formation); broken person-to-person by encountering a
+        # witness, and ambiently when crisis or revival exposes the lie.
+        crisis_r = env.crisis_active[reg]
+        revival_r = env.revival_active[reg]
+        d_del = ((cfg.delusion_growth_vamphoric * vamp
+                  + cfg.delusion_growth_comfort * env.comfort[reg])
+                 * (1.0 - 0.5 * pop.formation)
+                 - cfg.delusion_exposure_crisis * crisis_r
+                 - cfg.delusion_exposure_revival * revival_r)
+        pop.delusion[alive] += d_del[alive]
+        # The encounter: one conversation with someone who names the
+        # drain and the fork — blindness breaks one person at a time.
+        p_witness = (cfg.witness_contact_rate
+                     * np.sqrt(np.clip(agg["deep_share"], 0, 1)))[reg]
+        met_witness = alive & (rng.random(pop.capacity) < p_witness)
+        pop.delusion[met_witness] -= cfg.witness_break
+        # The formed see ever clearer.
+        pop.delusion[remnant] -= (cfg.delusion_formation_clarity
+                                  * pop.formation[remnant])
+        np.clip(pop.delusion, 0.0, 1.0, out=pop.delusion)
+
         # ---- 3. conversion (contact + receptivity + revival cascade) --
-        # Awareness gates turning: contact and openness cannot convert a
-        # heart that does not know it is dying. A small floor remains —
-        # grace can reach even the blind, just rarely.
+        # Awareness gates turning PER PERSON: contact and openness cannot
+        # convert a heart that does not know it is dying. A small floor
+        # remains — grace can reach even the blind, just rarely. Revivals
+        # therefore sweep those who can see and leave a hardened core.
         contact = (agg["remnant_share"]
                    * np.maximum(agg["remnant_formation"], 0.2))
         boost = 1.0 + cfg.revival_conversion_boost * env.revival_active
-        aware_gate = 0.05 + 0.95 * env.awareness
-        p_conv = (cfg.conversion_base * contact * env.receptivity
-                  * boost * aware_gate)[reg]
+        aware_i = 1.0 - cfg.awareness_blindness_cap * pop.delusion
+        p_conv = ((cfg.conversion_base * contact * env.receptivity
+                   * boost)[reg]
+                  * (0.05 + 0.95 * aware_i))
         convertible = alive & ~pop.born & ~pop.empire
         converts = convertible & (rng.random(pop.capacity) < p_conv)
         if converts.any():
@@ -120,6 +145,11 @@ class EmergentSimulation:
             m_count = np.bincount(reg[martyred], minlength=n_regions)
             martyr_share = m_count / np.maximum(agg["pop"], 1.0)
             env.martyr_seed(martyr_share * 50.0)
+            # Martyrdom is exposure that cannot be argued with: delusion
+            # breaks across the whole region where the blood falls.
+            m_break = (cfg.martyr_delusion_break * martyr_share * 50.0)[reg]
+            pop.delusion[alive] = np.clip(
+                pop.delusion[alive] - m_break[alive], 0.0, 1.0)
 
         # ---- 6. schism defection: institutionalized remnant falls back -
         for r in schism_regions:
@@ -192,8 +222,14 @@ class EmergentSimulation:
         else:
             self._ending_streak["consummation"] = 0
 
+        # Renewal lands AT the ratchet floor, never beneath it: the
+        # ceiling rises with the accumulated weight of history, so a
+        # late-age world can still renew — carrying its scars with it.
+        renewal_ceiling = max(
+            cfg.renewal_distance_ceiling,
+            cfg.ratchet_floor_gain * row["rebellion"] + 0.08)
         if (row["remnant_share"] >= cfg.renewal_remnant
-                and row["distance"] <= cfg.renewal_distance_ceiling):
+                and row["distance"] <= renewal_ceiling):
             self._ending_streak["renewal"] += 1
         else:
             self._ending_streak["renewal"] = 0
