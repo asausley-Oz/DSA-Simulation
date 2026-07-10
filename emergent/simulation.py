@@ -36,7 +36,14 @@ class EmergentSimulation:
         self.tick = 0
         self.history: List[dict] = []
         self.ending: Optional[str] = None
+        # The v7.6 sequence: incarnation -> deicide -> atonement.
+        self.incarnation_tick: Optional[int] = None
+        self.incarnation_region: Optional[int] = None
+        self.deicide_tick: Optional[int] = None
         self.atonement_tick: Optional[int] = None
+        # The store of faith: every believer who lives and dies before
+        # the atonement is counted into the covering (Heb 11:39-40).
+        self.faith_store = 0.0
         self._ending_streak = {"consummation": 0, "renewal": 0}
 
     # ------------------------------------------------------------------
@@ -45,18 +52,51 @@ class EmergentSimulation:
         n_regions = env.n
 
         agg = pop.regional_aggregates(n_regions)
+
+        # While incarnate, divine labor in the vessel runs at the
+        # perfect-image rate — a visible golden thread in one region.
+        incarnate = (self.incarnation_region
+                     if self.atonement_tick is None else None)
+        if incarnate is not None:
+            agg["labor_share"] = agg["labor_share"].copy()
+            agg["labor_share"][incarnate] += cfg.incarnate_labor_bonus
+
         _, schism_regions = env.step(agg, self.tick)
 
         alive = pop.alive
         reg = pop.region
         counters = {"conversions": 0, "apostasies": 0, "martyrs": 0}
 
-        # ---- 0. the adversary schemes ---------------------------------
+        # ---- 0a. the embodied presence --------------------------------
+        if incarnate is not None:
+            env.nearness[incarnate] = max(env.nearness[incarnate],
+                                          cfg.incarnation_nearness_hold)
+            # The Light in person: delusion collapses where He stands.
+            local = alive & (reg == incarnate)
+            pop.delusion[local] = np.maximum(
+                0.0, pop.delusion[local] - cfg.incarnate_delusion_break)
+            # The presence names the enemy daily.
+            if self.adversary is not None:
+                self.adversary.exposure = min(
+                    1.0, self.adversary.exposure
+                    + cfg.incarnate_exposure_gain)
+
+        # ---- 0b. the adversary schemes ---------------------------------
         accuse_region = None
         if self.adversary is not None:
-            adv_events, accuse_region = self.adversary.step(
-                env, agg, self.tick)
+            adv_events, accuse_region, deicide = self.adversary.step(
+                env, agg, self.tick, incarnate_region=incarnate)
             env.events.extend(adv_events)
+            if deicide and incarnate is not None:
+                self._deicide(incarnate)
+                incarnate = None
+
+        # He lays it down regardless — no one takes it from Him.
+        if (incarnate is not None and self.incarnation_tick is not None
+                and self.tick - self.incarnation_tick
+                >= cfg.incarnation_max_duration):
+            self._spring_atonement(incarnate, cause="laid down freely")
+            incarnate = None
 
         # ---- 1. vamphoric drain on agents -----------------------------
         vamp = env.vamphoric[reg]
@@ -164,6 +204,11 @@ class EmergentSimulation:
             m_break = (cfg.martyr_delusion_break * martyr_share * 50.0)[reg]
             pop.delusion[alive] = np.clip(
                 pop.delusion[alive] - m_break[alive], 0.0, 1.0)
+            # Martyrs weigh double in the store of faith.
+            if self.atonement_tick is None:
+                self.faith_store += (cfg.martyr_faith_weight
+                                     * pop.formation[martyred].sum()
+                                     / cfg.n_agents)
 
         # ---- 5b. accusation: the deep remnant sifted like wheat --------
         if accuse_region is not None:
@@ -186,14 +231,19 @@ class EmergentSimulation:
 
         # ---- 7. demography --------------------------------------------
         pop.age[pop.alive] += 1
-        deaths = pop.deaths(env.crisis_active)
+        died = pop.deaths(env.crisis_active)
+        deaths = int(died.size)
+        # The faithful dead are counted into the covering to come.
+        if self.atonement_tick is None and deaths:
+            faithful = died[pop.born[died]]
+            self.faith_store += pop.formation[faithful].sum() / cfg.n_agents
         births = pop.births(env.comfort)
         moved = pop.migrate(env.attractiveness(), env.neighbors)
 
-        # ---- 7b. atonement: the trap broken from within ----------------
+        # ---- 7b. incarnation: the fullness of time ---------------------
         agg_after = pop.regional_aggregates(n_regions)
-        if (cfg.enable_atonement and self.atonement_tick is None):
-            self._check_atonement(agg_after)
+        if (cfg.enable_atonement and self.incarnation_tick is None):
+            self._check_incarnation(agg_after)
 
         # ---- 8. record ---------------------------------------------
         pop_total = agg_after["pop"].sum()
@@ -237,28 +287,67 @@ class EmergentSimulation:
         self.tick += 1
 
     # ------------------------------------------------------------------
-    def _check_atonement(self, agg: dict):
+    def _check_incarnation(self, agg: dict):
         """The fullness of time — state conditions, never a date.
 
         The trap must be fully sprung (the record of rebellion heavy
         across the world) AND a prepared vessel must exist: a region
-        holding a deeply formed remnant under drawn-near presence. Then
-        the trap is broken from within, once, for all regions.
+        holding even a small deeply-formed remnant under drawn-near
+        presence. Then God fully enters the convergence point.
         """
         cfg, env = self.cfg, self.env
         weights = agg["pop"] / max(agg["pop"].sum(), 1.0)
         record_weight = float(env.rebellion @ weights)
-        if record_weight < cfg.atonement_rebellion_trigger:
+        if record_weight < cfg.incarnation_rebellion_trigger:
             return
 
-        vessel_mask = ((agg["deep_share"] >= cfg.atonement_vessel_deep)
-                       & (env.nearness >= cfg.atonement_vessel_nearness))
+        vessel_mask = ((agg["deep_share"] >= cfg.incarnation_vessel_deep)
+                       & (env.nearness >= cfg.incarnation_vessel_nearness))
         if not vessel_mask.any():
             return
         vessel = int(np.argmax(np.where(vessel_mask, env.nearness, -1.0)))
 
+        self.incarnation_tick = self.tick
+        self.incarnation_region = vessel
+        env.nearness[vessel] = max(env.nearness[vessel],
+                                   cfg.incarnation_nearness_hold)
+        env.events.append({
+            "tick": self.tick, "region": env.names[vessel],
+            "type": "incarnation",
+            "detail": (f"the Word made flesh — record weight "
+                       f"{record_weight:.2f}, nearness held at "
+                       f"{cfg.incarnation_nearness_hold:.2f}")})
+
+    def _deicide(self, vessel: int):
+        """His final scheme — the one he cannot resist and cannot
+        survive. Darkness at noon, and the trap springs."""
+        cfg, env = self.cfg, self.env
+        self.deicide_tick = self.tick
+        env.distance[vessel] = min(
+            1.0, env.distance[vessel] + cfg.deicide_distance_spike)
+        env.strain[vessel] += 0.3
+        env.events.append({
+            "tick": self.tick, "region": env.names[vessel],
+            "type": "deicide",
+            "detail": ("the fullest expression of cumulative rebellion — "
+                       "had they known, they would not have crucified")})
+        self._spring_atonement(vessel, cause="deicide")
+
+    def _spring_atonement(self, vessel: int, cause: str):
+        """The trap broken from within — retroactive for the faithful.
+
+        The covering scales with the store of faith: every believer who
+        lived and died before this tick is counted into it, only
+        together made perfect (Heb 11:39-40).
+        """
+        cfg, env = self.cfg, self.env
+        clear = min(0.95, cfg.atonement_base_clear
+                    + cfg.atonement_faith_scale * self.faith_store)
+        light = min(0.60, cfg.atonement_delusion_break
+                    + cfg.atonement_faith_delusion * self.faith_store)
+
         # The record of debt cancelled — for every region, from one.
-        env.rebellion *= (1.0 - cfg.atonement_rebellion_clear)
+        env.rebellion *= (1.0 - clear)
         # The veil torn.
         floor = np.clip(cfg.ratchet_floor_gain * env.rebellion, 0.0, 0.6)
         env.distance = np.clip(
@@ -269,20 +358,22 @@ class EmergentSimulation:
         env.nearness_floor_bonus = cfg.atonement_nearness_floor_gain
         # Grace now covers part of what would otherwise stick.
         env.grace_factor = cfg.atonement_grace
-        # The Light has come — delusion breaks worldwide.
+        # The Light has come — delusion breaks worldwide, retroactively
+        # brighter for every faithful life laid up in the store.
         self.pop.delusion = np.clip(
-            self.pop.delusion - cfg.atonement_delusion_break, 0.0, 1.0)
+            self.pop.delusion - light, 0.0, 1.0)
         # The accuser disarmed (Col 2:15).
         if self.adversary is not None:
             self.adversary.disarmed = True
 
         self.atonement_tick = self.tick
+        self.incarnation_region = None
         env.events.append({
             "tick": self.tick, "region": env.names[vessel],
             "type": "atonement",
-            "detail": (f"record weight {record_weight:.2f} cancelled "
-                       f"{cfg.atonement_rebellion_clear:.0%}; "
-                       "the accuser disarmed")})
+            "detail": (f"sprung by {cause}; store of faith "
+                       f"{self.faith_store:.2f} -> record cancelled "
+                       f"{clear:.0%}, light {light:.2f}")})
 
     def _check_endings(self, row: dict):
         """State-only terminal attractors on covenant distance. No dates.
@@ -357,7 +448,10 @@ class EmergentSimulation:
             "total_conversions": sum(h["conversions"] for h in self.history),
             "total_apostasies": sum(h["apostasies"] for h in self.history),
             "total_martyrs": sum(h["martyrs"] for h in self.history),
+            "incarnation_tick": self.incarnation_tick,
+            "deicide_tick": self.deicide_tick,
             "atonement_tick": self.atonement_tick,
+            "faith_store": round(self.faith_store, 3),
             "schemes_run": (dict(self.adversary.schemes_run)
                             if self.adversary else {}),
             "events_by_type": by_type,

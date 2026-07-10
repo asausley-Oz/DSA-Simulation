@@ -226,24 +226,44 @@ class EmergentConfig:
     schism_scheme_unity_cost: float = 0.15
     schism_scheme_pressure: float = 0.60
 
-    # --- atonement (the trap broken from within) ---
-    # Fires ONCE, at the fullness of time — state conditions, no dates:
-    # the record of accumulated rebellion must be heavy (the trap fully
-    # sprung) AND a prepared vessel must exist (a region with a deep
-    # remnant under high nearness). Effects, per CDT: the record of debt
-    # cancelled (ratchet slashed), the veil torn (distance breaks), the
-    # Spirit given (nearness floor rises), the accuser disarmed, grace
-    # covering what would otherwise stick.
+    # --- incarnation -> deicide -> atonement (the v7.6 sequence) ---
+    # INCARNATION fires once, at the fullness of time — state conditions,
+    # no dates: the record of rebellion heavy across the world AND a
+    # prepared vessel (a region holding even a small deeply-formed
+    # remnant under drawn-near presence). While incarnate: nearness in
+    # the vessel is held near 1.0, delusion there collapses (the Light in
+    # person), divine labor runs at the perfect-image rate, and the
+    # adversary is exposed wherever the presence stands.
+    #
+    # The adversary cannot ignore it: a deicide compulsion grows every
+    # tick of the incarnation — the one scheme he cannot resist and
+    # cannot survive (1 Cor 2:8). DEICIDE springs the ATONEMENT: the
+    # record cancelled, the veil torn, the indwelling given, the accuser
+    # disarmed — scaled RETROACTIVELY by the accumulated faith of every
+    # believer who lived and died before that tick (Heb 11:39-40). If no
+    # adversary takes the bait, the life is laid down freely at the end
+    # of the incarnation window (John 10:18) — atonement comes anyway.
     enable_atonement: bool = True
-    atonement_rebellion_trigger: float = 0.55  # the fullness of the weight
-    atonement_vessel_deep: float = 0.015       # a faithful few suffice...
-    atonement_vessel_nearness: float = 0.40    # ...under drawn-near presence
-    atonement_rebellion_clear: float = 0.75    # fraction of the record cancelled
+    incarnation_rebellion_trigger: float = 0.55  # the fullness of the weight
+    incarnation_vessel_deep: float = 0.015     # a faithful few suffice...
+    incarnation_vessel_nearness: float = 0.40  # ...under drawn-near presence
+    incarnation_nearness_hold: float = 0.95    # Immanuel — presence embodied
+    incarnate_labor_bonus: float = 0.15        # the perfect image at work
+    incarnate_delusion_break: float = 0.08     # per tick, in the vessel region
+    incarnate_exposure_gain: float = 0.02      # the presence names him daily
+    incarnation_max_duration: int = 35         # he lays it down regardless
+    deicide_urge_base: float = 0.012            # compulsion per incarnate tick
+    deicide_urge_power: float = 0.02           # plus per unit of his power
+    deicide_distance_spike: float = 0.15       # darkness at noon
+    atonement_base_clear: float = 0.50         # covering before the faithful
+    atonement_faith_scale: float = 1.0         # retroactive: per unit stored faith
     atonement_distance_break: float = 0.30     # the veil torn
     atonement_nearness_gift: float = 0.25      # the indwelling begins
     atonement_nearness_floor_gain: float = 0.10
     atonement_grace: float = 0.50   # post-atonement ratchet multiplier
-    atonement_delusion_break: float = 0.30     # the Light has come
+    atonement_delusion_break: float = 0.20     # the Light has come (base)
+    atonement_faith_delusion: float = 0.50     # retroactive light per stored faith
+    martyr_faith_weight: float = 2.0           # martyrs weigh double in the store
 
     # --- endings (state-only, no dates) ---
     consummation_distance: float = 0.96  # sustained global distance => collapse

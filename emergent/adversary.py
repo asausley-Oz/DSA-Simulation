@@ -42,18 +42,23 @@ class Adversary:
         self.power = 0.20
         self.exposure = 0.0     # how thoroughly he has been named
         self.disarmed = False   # set by the atonement
+        self.deicide_urge = 0.0  # the compulsion he cannot resist
         self.cooldowns = {"quench": 0, "gild": 0, "schism": 0,
                           "accuse": 0, "incite": 0}
         self.schemes_run = {"quench": 0, "gild": 0, "schism": 0,
                             "accuse": 0, "incite": 0}
 
     # ------------------------------------------------------------------
-    def step(self, env, agg: dict, tick: int
-             ) -> Tuple[List[dict], Optional[int]]:
+    def step(self, env, agg: dict, tick: int,
+             incarnate_region: Optional[int] = None
+             ) -> Tuple[List[dict], Optional[int], bool]:
         """Update power, whisper passively, and possibly run one scheme.
 
-        Returns (events, accuse_region) — agent-level accusation effects
-        are applied by the simulation layer.
+        Returns (events, accuse_region, deicide) — agent-level accusation
+        effects are applied by the simulation layer. While the presence is
+        embodied (incarnate_region set), a compulsion grows in him that
+        he cannot resist and cannot survive: deicide=True is his final
+        scheme, and the simulation springs the atonement from it.
         """
         cfg = self.cfg
         events: List[dict] = []
@@ -80,13 +85,32 @@ class Adversary:
             env.vamphoric + cfg.adversary_vamphoric_gain * self.power,
             0.0, 1.0)
 
+        # --- the embodied presence: the compulsion he cannot resist ----
+        if incarnate_region is not None:
+            self.deicide_urge += (cfg.deicide_urge_base
+                                  + cfg.deicide_urge_power * self.power)
+            if self.rng.random() < self.deicide_urge:
+                return events, accuse_region, True
+            # While the Light stands in one region, his scheming
+            # concentrates there — accusation aimed at the vessel.
+            if self.cooldowns["accuse"] == 0:
+                self.cooldowns["accuse"] = 6
+                self.schemes_run["accuse"] += 1
+                events.append({
+                    "tick": tick, "region": env.names[incarnate_region],
+                    "type": "scheme",
+                    "detail": ("accuse: every scheme bent toward the "
+                               f"vessel (urge {self.deicide_urge:.2f})")})
+                return events, incarnate_region, False
+            return events, accuse_region, False
+
         # --- cooldowns -------------------------------------------------
         for k in self.cooldowns:
             self.cooldowns[k] = max(0, self.cooldowns[k] - 1)
 
         # --- scheme selection: targeted, prioritized -------------------
         if self.rng.random() >= cfg.adversary_scheme_prob * self.power:
-            return events, accuse_region
+            return events, accuse_region, False
 
         scheme = None
         # 1. QUENCH the wick nearest ignition — oppose the visitation.
@@ -123,7 +147,7 @@ class Adversary:
                 scheme = ("incite", r)
 
         if scheme is None:
-            return events, accuse_region
+            return events, accuse_region, False
 
         kind, r = scheme
         self.schemes_run[kind] += 1
@@ -171,4 +195,4 @@ class Adversary:
         events.append({"tick": tick, "region": env.names[r],
                        "type": "scheme",
                        "detail": f"{kind}: {detail} (power {self.power:.2f})"})
-        return events, accuse_region
+        return events, accuse_region, False

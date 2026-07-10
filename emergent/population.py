@@ -121,19 +121,20 @@ class Population:
     # ------------------------------------------------------------------
     # Demography
     # ------------------------------------------------------------------
-    def deaths(self, crisis_active: np.ndarray) -> int:
-        """Natural + crisis mortality. Returns number of deaths."""
+    def deaths(self, crisis_active: np.ndarray) -> np.ndarray:
+        """Natural + crisis mortality. Returns indices of the dead, so the
+        faithful among them can be counted into the covering."""
         cfg, rng = self.cfg, self.rng
         alive_idx = np.flatnonzero(self.alive)
         if alive_idx.size == 0:
-            return 0
+            return alive_idx
         age = self.age[alive_idx].astype(float)
         p = (cfg.mortality_base +
              cfg.mortality_gompertz_a * np.exp(cfg.mortality_gompertz_b * age))
         p += cfg.crisis_mortality * crisis_active[self.region[alive_idx]]
         died = alive_idx[rng.random(alive_idx.size) < np.clip(p, 0, 0.6)]
         self.alive[died] = False
-        return died.size
+        return died
 
     def births(self, comfort: np.ndarray) -> int:
         """Spawn newborns into free slots, inheriting formation imperfectly.

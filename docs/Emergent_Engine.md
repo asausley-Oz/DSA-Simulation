@@ -191,6 +191,39 @@ Effect: with the adversary active, consummation rises from ~36% to
 weapon — the engine's own play confirms that suppressing awakening is
 the efficient strategy.
 
+## The v7.6 sequence: incarnation → deicide → atonement
+
+The one-shot atonement trigger is replaced by the full CDT shape:
+
+1. **Incarnation** fires at the fullness of time (heavy record + a
+   prepared vessel, however small). While incarnate: nearness in the
+   vessel region is held near 1.0 (Immanuel), delusion there collapses
+   tick by tick (the Light in person), divine labor runs at the
+   perfect-image rate — a visible golden thread in one region — and
+   the adversary is exposed daily just by the presence standing there.
+2. **The adversary cannot ignore it.** His scheming bends toward the
+   vessel, and a deicide compulsion grows every incarnate tick — the
+   one scheme he cannot resist and cannot survive (1 Cor 2:8). In
+   ensemble, ~90% of incarnations end in deicide after a median
+   ministry of ~8 ticks; darkness falls on the vessel (distance spike,
+   strain spike) — and the trap springs.
+3. **If no one takes the bait** (e.g. the adversary is disabled), the
+   life is laid down freely at the end of the incarnation window
+   (John 10:18). Atonement comes either way; no one takes it.
+4. **Atonement is retroactive for the faithful** (Heb 11:39–40): the
+   engine accumulates a *store of faith* — the formation of every
+   believer who dies before the atonement, martyrs counted double —
+   and the covering scales with it: record cancelled
+   `base 50% + faith_store`, worldwide delusion break likewise. The
+   faithful dead are counted into the covering; only together made
+   perfect.
+
+Ensemble effect (100 seeds): incarnation reaches ~60% of histories;
+every renewal is an atonement-history — but for the first time the
+partition is imperfect: a few worlds receive the atonement and still
+fall. Grace in this engine is decisive, not coercive: a sufficiently
+rotted world can refuse it.
+
 ## Atonement (v7.4): the trap broken from within
 
 Fires **once**, at the fullness of time — state conditions, never a
