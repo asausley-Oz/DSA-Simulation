@@ -118,8 +118,9 @@ class EmergentSimulation:
         np.clip(pop.agency, 0.0, 1.0, out=pop.agency)
 
         # Fully locked nominal agents become empire agents; empire agents
-        # whose locks loosen fall back out — empires can crumble.
-        captured = nominal & (pop.scc_lock >= 1.0)
+        # whose locks loosen fall back out — empires can crumble. The
+        # seed-bearer cannot be captured.
+        captured = nominal & (pop.scc_lock >= 1.0) & ~pop.seed
         pop.empire[captured] = True
         released = alive & pop.empire & (pop.scc_lock < cfg.empire_release_lock)
         pop.empire[released] = False
@@ -183,7 +184,8 @@ class EmergentSimulation:
         p_apost = ((cfg.apostasy_base * env.comfort[reg]
                     + cfg.fear_apostasy * env.persecution[reg])
                    * (1.0 - pop.formation) * (0.5 + pop.scc_lock))
-        falling = remnant & (rng.random(pop.capacity) < p_apost)
+        # The seed-bearer cannot fall away — the promise holds the line.
+        falling = remnant & (rng.random(pop.capacity) < p_apost) & ~pop.seed
         if falling.any():
             pop.born[falling] = False
             counters["apostasies"] = int(falling.sum())
@@ -239,6 +241,17 @@ class EmergentSimulation:
             self.faith_store += pop.formation[faithful].sum() / cfg.n_agents
         births = pop.births(env.comfort)
         moved = pop.migrate(env.attractiveness(), env.neighbors)
+
+        # Eve's promise: the seed always has a living bearer. If the
+        # line was cut this tick, it passes — or is raised from stones.
+        how = pop.maintain_seed()
+        if how == "raised":
+            env.events.append({
+                "tick": self.tick,
+                "region": env.names[int(pop.region[pop.seed][0])],
+                "type": "seed",
+                "detail": ("the remnant line was cut — a bearer raised "
+                           "from the stones (Matt 3:9)")})
 
         # ---- 7b. incarnation: the fullness of time ---------------------
         agg_after = pop.regional_aggregates(n_regions)
@@ -303,6 +316,20 @@ class EmergentSimulation:
 
         vessel_mask = ((agg["deep_share"] >= cfg.incarnation_vessel_deep)
                        & (env.nearness >= cfg.incarnation_vessel_nearness))
+
+        # Election: the line of promise itself suffices as vessel — a
+        # lone Mary in a backwater qualifies where whole churches are
+        # not required. But the world must still receive the visitation:
+        # the bearer's region needs the full measure of drawn-near
+        # presence, or the fullness of time does not come (a hardened
+        # world can hold the seed and still refuse the Son).
+        if cfg.seed_bearer:
+            bearer = np.flatnonzero(self.pop.alive & self.pop.seed)
+            if bearer.size:
+                r_b = int(self.pop.region[bearer[0]])
+                if env.nearness[r_b] >= cfg.incarnation_vessel_nearness:
+                    vessel_mask[r_b] = True
+
         if not vessel_mask.any():
             return
         vessel = int(np.argmax(np.where(vessel_mask, env.nearness, -1.0)))
@@ -407,11 +434,17 @@ class EmergentSimulation:
         for name, streak in self._ending_streak.items():
             if streak >= sustain[name] and self.ending is None:
                 self.ending = name
+                detail = (f"distance {row['distance']:.3f}, "
+                          f"remnant {row['remnant_share']:.3f}")
+                # Even a consummated world does not extinguish the seed:
+                # the bearer endures through the end (Gen 3:15).
+                bearer = np.flatnonzero(self.pop.alive & self.pop.seed)
+                if name == "consummation" and bearer.size:
+                    r_b = self.env.names[int(self.pop.region[bearer[0]])]
+                    detail += f"; the seed endures in {r_b}"
                 self.env.events.append({
                     "tick": self.tick, "region": "GLOBAL",
-                    "type": name,
-                    "detail": (f"distance {row['distance']:.3f}, "
-                               f"remnant {row['remnant_share']:.3f}")})
+                    "type": name, "detail": detail})
 
     # ------------------------------------------------------------------
     def run(self, verbose: bool = True) -> pd.DataFrame:
@@ -452,6 +485,9 @@ class EmergentSimulation:
             "deicide_tick": self.deicide_tick,
             "atonement_tick": self.atonement_tick,
             "faith_store": round(self.faith_store, 3),
+            "seed_passes": self.pop.seed_passes,
+            "seed_raised": self.pop.seed_raised,
+            "seed_endures": bool((self.pop.alive & self.pop.seed).any()),
             "schemes_run": (dict(self.adversary.schemes_run)
                             if self.adversary else {}),
             "events_by_type": by_type,

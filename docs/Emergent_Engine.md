@@ -191,6 +191,38 @@ Effect: with the adversary active, consummation rises from ~36% to
 weapon — the engine's own play confirms that suppressing awakening is
 the efficient strategy.
 
+## The primordial pair (v7.7): Eve's promise and Adam's curse
+
+Every world now begins with both halves of Eden's aftermath (Gen 3).
+
+**The Seed (Gen 3:15).** There is always exactly one living bearer of
+the promise. The bearer cannot apostatize, cannot be empire-captured,
+and is kept formed (≥ 0.75). At the bearer's death the seed passes to
+the most-formed living remnant; if the whole remnant line has been
+cut, God raises a bearer from the stones (Matt 3:9). The line survives
+~25–30 generational passes per history — and it survives the end
+itself: **in every consummated world the seed still endures**, and the
+consummation event records where. Election also has its purpose: the
+bearer's region qualifies as an incarnation vessel (a lone Mary in a
+backwater suffices where whole churches are not required) — but only
+under the full measure of drawn-near presence. A hardened world can
+hold the seed and still refuse the Son.
+
+**The Toil (Gen 3:17-19).** The ground resists: comfort grows slower,
+rebuilding is sweaty (decay is free, restoration is not), and the
+frustration of the curse feeds both the bent and the strain of
+conflict (Cain follows Eden immediately). The curse is severe mercy —
+it guards worlds against the comfort trap — but the vamphoric system's
+oldest sales pitch is escape from the curse without God (Babel, the
+antediluvian slide): `effective_toil = toil × (1 − vamphoric)`. As the
+system's load grows it buys the toil out, and the trap reopens. Doomed
+worlds in this engine are almost always worlds that engineered away
+their own severe mercy.
+
+Ensemble (100 seeds): 84% renewal / 12% consummation / 4% contested.
+Incarnation reaches ~89% of histories; worlds that never receive it
+die blind and vessel-less — with the seed still alive inside them.
+
 ## The v7.6 sequence: incarnation → deicide → atonement
 
 The one-shot atonement trigger is replaced by the full CDT shape:

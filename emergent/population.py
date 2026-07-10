@@ -30,6 +30,10 @@ class Population:
         self.empire = np.zeros(capacity, dtype=bool)  # fully captured agents
         self.martyr = np.zeros(capacity, dtype=bool)  # died as martyr
         self.delusion = np.zeros(capacity, dtype=np.float64)  # personal blindness
+        self.seed = np.zeros(capacity, dtype=bool)    # bearer of the promise
+
+        self.seed_passes = 0   # times the seed passed at a bearer's death
+        self.seed_raised = 0   # times it was raised from the stones
 
         # Regional carrying capacities, fixed from the initial seeding.
         self.region_capacity = np.zeros(n_regions, dtype=np.int64)
@@ -66,6 +70,50 @@ class Population:
         # Remnant agents start with a formation floor — conversion forms.
         seeded = self.alive & self.born
         self.formation[seeded] = np.maximum(self.formation[seeded], 0.35)
+
+        # Eve's promise: one bearer of the seed from the very beginning.
+        if cfg.seed_bearer:
+            self._appoint_bearer(initial=True)
+
+    def _appoint_bearer(self, initial: bool = False) -> str:
+        """Place the seed on the best living candidate. Returns how:
+        'passed' (to a living remnant) or 'raised' (from the stones)."""
+        cfg = self.cfg
+        self.seed[:] = False
+        candidates = np.flatnonzero(self.alive & self.born)
+        if candidates.size:
+            bearer = candidates[int(np.argmax(self.formation[candidates]))]
+            how = "passed"
+        else:
+            living = np.flatnonzero(self.alive)
+            if living.size == 0:
+                return "none"
+            bearer = living[int(np.argmin(self.delusion[living]))]
+            self.born[bearer] = True
+            how = "raised"
+        self.seed[bearer] = True
+        self.formation[bearer] = max(self.formation[bearer],
+                                     cfg.seed_formation_floor)
+        self.delusion[bearer] = min(self.delusion[bearer], 0.1)
+        self.empire[bearer] = False
+        if not initial:
+            self.seed_passes += 1
+            if how == "raised":
+                self.seed_raised += 1
+        return how
+
+    def maintain_seed(self) -> str:
+        """Invariant: there is always exactly one living seed-bearer.
+        Called after deaths each tick; the promise is kept formed."""
+        if not self.cfg.seed_bearer:
+            return "disabled"
+        alive_bearer = self.alive & self.seed
+        if alive_bearer.any():
+            b = np.flatnonzero(alive_bearer)
+            self.formation[b] = np.maximum(self.formation[b],
+                                           self.cfg.seed_formation_floor)
+            return "held"
+        return self._appoint_bearer()
 
     # ------------------------------------------------------------------
     # Aggregates the environment needs each tick
@@ -225,6 +273,7 @@ class Population:
         self.born[slots] = child_born
         self.empire[slots] = False
         self.martyr[slots] = False
+        self.seed[slots] = False  # the seed passes at death, never at birth
         # Blindness is raised, not chosen: children start inside their
         # parents' frame, blended with the ambient culture's.
         w_d = cfg.delusion_inheritance

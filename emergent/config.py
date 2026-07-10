@@ -61,6 +61,24 @@ class EmergentConfig:
     adjacency: List[Tuple[int, int]] = field(
         default_factory=lambda: list(DEFAULT_ADJACENCY))
 
+    # --- the primordial pair: Eve's promise and Adam's curse (Gen 3) ---
+    # Every world begins with both. THE SEED: there is always exactly
+    # one living person carrying the promise (Gen 3:15) — the line
+    # cannot apostatize, cannot be captured, and when the bearer dies
+    # the seed passes to the most-formed living remnant; if none
+    # remains, God raises a bearer from the stones (Matt 3:9). The
+    # world can fall; the seed endures even through consummation.
+    # THE TOIL: the ground resists (thorns and thistles) — comfort
+    # grows slower, rebuilding is sweaty, and a floor of hardship keeps
+    # hearts from sealing shut. The curse is also severe mercy.
+    seed_bearer: bool = True
+    seed_formation_floor: float = 0.75   # the line of promise is kept formed
+    toil: float = 0.25                   # by the sweat of your brow
+    # The curse cuts both ways: frustration of the ground breeds
+    # resentment and conflict (Cain follows Eden immediately).
+    toil_bent_gain: float = 0.4          # frustration feeds the bent
+    toil_strain: float = 0.003           # scarce bread breeds conflict
+
     # --- covenant distance (the master equation) ---
     # distance(t+1) = distance(t) + rebellion_flux - nearness_flux
     # Humanity's thread pushes distance open; God's counter-movement and
@@ -246,7 +264,7 @@ class EmergentConfig:
     enable_atonement: bool = True
     incarnation_rebellion_trigger: float = 0.55  # the fullness of the weight
     incarnation_vessel_deep: float = 0.015     # a faithful few suffice...
-    incarnation_vessel_nearness: float = 0.40  # ...under drawn-near presence
+    incarnation_vessel_nearness: float = 0.55  # ...under drawn-near presence
     incarnation_nearness_hold: float = 0.95    # Immanuel — presence embodied
     incarnate_labor_bonus: float = 0.15        # the perfect image at work
     incarnate_delusion_break: float = 0.08     # per tick, in the vessel region

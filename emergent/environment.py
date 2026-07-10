@@ -109,7 +109,8 @@ class Environment:
         # violence — a crisis IS rebellion enacted at scale.
         effective_bent = cfg.bent * (
             (1.0 + cfg.bent_vamphoric_gain * self.vamphoric)
-            * (1.0 + cfg.ratchet_bent_gain * self.rebellion))
+            * (1.0 + cfg.ratchet_bent_gain * self.rebellion)
+            * (1.0 + cfg.toil_bent_gain * cfg.toil))
         rebellion_flux = (
             effective_bent
             + cfg.empire_entropy_push * agg["empire_share"]
@@ -162,14 +163,19 @@ class Environment:
         # He remains faithful (2 Tim 2:13) — nearness never fully withdraws.
         self.nearness = np.clip(self.nearness, floor * 0.5, 1.0)
 
+        # The vamphoric buyout of the curse: as the system's load grows,
+        # it engineers away the toil (Babel) — and the trap reopens.
+        effective_toil = cfg.toil * (1.0 - self.vamphoric)
+
         # --- entropy: the physical shadow of relational breach ----------
         # Decay lags distance both ways: breach corrodes the world slowly,
         # and a closed distance rebuilds it slowly. Crises wreck the
-        # physical world faster than they change hearts.
+        # physical world faster than they change hearts. The toil makes
+        # rebuilding sweaty — decay comes free, restoration does not.
+        shadow = cfg.entropy_shadow_rate * (self.distance - self.entropy)
+        shadow = np.where(shadow < 0, shadow * (1.0 - effective_toil), shadow)
         self.entropy = np.clip(
-            self.entropy
-            + cfg.entropy_shadow_rate * (self.distance - self.entropy)
-            + cfg.crisis_entropy_shock * crisis,
+            self.entropy + shadow + cfg.crisis_entropy_shock * crisis,
             0.0, 1.0)
 
         # --- vamphoric load: parasitic systems grow in the breach AND in
@@ -184,7 +190,13 @@ class Environment:
         self.vamphoric = np.clip(self.vamphoric + d_vamp, 0.0, 1.0)
 
         # --- comfort: prosperity compounds in calm, crashes in crisis ---
-        d_comfort = (cfg.comfort_growth * (1.0 - self.entropy) * (1.0 - crisis)
+        # Thorns and thistles: the toil drags every harvest — the curse
+        # doubling as severe mercy against the comfort trap. But the
+        # vamphoric system's oldest sales pitch is escape from the curse
+        # without God (Babel, the antediluvian slide): as its load grows
+        # it buys the toil out, and the trap reopens.
+        d_comfort = (cfg.comfort_growth * (1.0 - effective_toil)
+                     * (1.0 - self.entropy) * (1.0 - crisis)
                      - cfg.comfort_crisis_crash * crisis
                      - 0.002)  # slow upkeep cost
         self.comfort = np.clip(self.comfort + d_comfort, 0.0, 1.0)
@@ -219,8 +231,9 @@ class Environment:
         # can still see. A deluded region misreads its own suffering
         # (Pharaoh's pattern): the hardship terms are gated by awareness.
         aware = self.awareness
-        target = np.clip(0.20 + (0.45 * crisis + 0.55 * self.persecution
-                                 + 0.25 * self.entropy)
+        target = np.clip(0.20
+                         + (0.45 * crisis + 0.55 * self.persecution
+                            + 0.25 * self.entropy)
                          * (0.3 + 0.7 * aware)
                          - 0.45 * self.comfort,
                          0.0, 1.0)
@@ -246,6 +259,7 @@ class Environment:
         d_strain = (cfg.strain_from_breach * breach
                     + cfg.strain_from_vamphoric * self.vamphoric
                     + cfg.strain_from_disunity * (1.0 - self.unity)
+                    + cfg.toil_strain * cfg.toil
                     - cfg.strain_relief * (0.5 + 0.5 * self.comfort))
         self.strain = np.maximum(self.strain + d_strain, 0.0)
 
