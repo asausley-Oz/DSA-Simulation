@@ -169,14 +169,27 @@ martyr-seed grows what he strikes), and the atonement disarms him
 He schemes with intelligence, prioritized against God's counter-
 movement: **QUENCH** (crush revival tension nearest ignition — the
 seed snatched away), **GILD** (the subtlest: reward the strongest
-church into comfort — golden chains), **ACCUSE** (sift the deep
-remnant — drain agency, inflate pride; risks being named, which raises
-his exposure), **INCITE** (stir war where the remnant is absent, so
-ruin cannot seed). Schemes appear in the event timeline.
+church into comfort — golden chains), **SCHISM** (sow division where
+unity is already weak — set brothers against brothers, loading the
+church's own fracture pressure until it splits itself), **ACCUSE**
+(sift the deep remnant — drain agency, inflate pride; risks being
+named, which raises his exposure), **INCITE** (stir war where the
+remnant is absent, so ruin cannot seed). Schemes appear in the event
+timeline.
+
+**The distance load — his engine and his leash.** Every scheme is
+rebellion enacted: it widens the breach directly and part of it sticks
+to the permanent record. This makes his power self-feeding (breach →
+power → schemes → breach) — and it is also his undoing, because the
+record is precisely what triggers the fullness of time. In ensemble,
+strengthening the adversary *raised* the renewal share: the harder he
+works, the sooner the atonement fires and disarms him. He hastens his
+own end (1 Cor 2:8).
 
 Effect: with the adversary active, consummation rises from ~36% to
-~55% of histories. Quench is his most-used weapon — the engine's own
-play confirms that suppressing awakening is the efficient strategy.
+~40-55% of histories (depending on tuning). Quench is his most-used
+weapon — the engine's own play confirms that suppressing awakening is
+the efficient strategy.
 
 ## Atonement (v7.4): the trap broken from within
 

@@ -210,12 +210,21 @@ class EmergentConfig:
     adversary_from_distance: float = 0.35
     adversary_from_empire: float = 0.50
     adversary_exposure_damp: float = 0.60  # being named cuts his power
-    adversary_scheme_prob: float = 0.35    # per-tick chance x power
+    adversary_scheme_prob: float = 0.45    # per-tick chance x power
     adversary_delusion_gain: float = 0.006  # the passive whisper
     adversary_vamphoric_gain: float = 0.004
     adversary_disarmed_factor: float = 0.35  # power ceiling after Col 2:15
     accuse_agency_drain: float = 0.15      # sifting the deep remnant
     accuse_pride_gain: float = 0.08
+    # Every scheme is rebellion enacted: it widens the breach directly
+    # and part of it sticks to the record — the parasite feeding the
+    # very disorder it feeds on.
+    scheme_distance_load: float = 0.05
+    scheme_record_stick: float = 0.5       # fraction of the load that ratchets
+    # SCHISM, the fifth movement: sow division where accusation has
+    # already inflated pride — load the church's own fracture pressure.
+    schism_scheme_unity_cost: float = 0.15
+    schism_scheme_pressure: float = 0.60
 
     # --- atonement (the trap broken from within) ---
     # Fires ONCE, at the fullness of time — state conditions, no dates:

@@ -17,8 +17,16 @@ He schemes with intelligence, not randomness — each move targets where
 God's counter-movement is gaining ground:
   QUENCH — snatch the seed: crush revival tension where it nears ignition
   GILD   — the subtlest scheme: reward a strong church into softness
+  SCHISM — sow division where accusation has inflated pride: load the
+           church's own fracture pressure until it splits itself
   ACCUSE — sift the deep remnant: drain agency, inflate pride
   INCITE — stir war where the remnant is absent, so ruin cannot seed
+
+Every movement carries a DISTANCE LOAD: a scheme is rebellion enacted,
+so it widens the breach directly and part of it sticks to the record —
+the parasite feeding the very disorder it feeds on. This is his engine
+of escalation, and also his leash: the more he works, the heavier the
+record grows toward the fullness of time.
 """
 
 import numpy as np
@@ -34,8 +42,10 @@ class Adversary:
         self.power = 0.20
         self.exposure = 0.0     # how thoroughly he has been named
         self.disarmed = False   # set by the atonement
-        self.cooldowns = {"quench": 0, "gild": 0, "accuse": 0, "incite": 0}
-        self.schemes_run = {"quench": 0, "gild": 0, "accuse": 0, "incite": 0}
+        self.cooldowns = {"quench": 0, "gild": 0, "schism": 0,
+                          "accuse": 0, "incite": 0}
+        self.schemes_run = {"quench": 0, "gild": 0, "schism": 0,
+                            "accuse": 0, "incite": 0}
 
     # ------------------------------------------------------------------
     def step(self, env, agg: dict, tick: int
@@ -91,12 +101,20 @@ class Adversary:
             r = int(np.argmax(candidates))
             if self.cooldowns["gild"] == 0 and candidates[r] > 0.10:
                 scheme = ("gild", r)
-        # 3. ACCUSE the deep remnant — sift them like wheat.
+        # 3. SCHISM — divide the church against itself. Easiest where a
+        #    sizable remnant already carries weakened unity.
+        if scheme is None:
+            candidates = np.where(env.unity < 0.65,
+                                  agg["remnant_share"], -1.0)
+            r = int(np.argmax(candidates))
+            if self.cooldowns["schism"] == 0 and candidates[r] > 0.15:
+                scheme = ("schism", r)
+        # 4. ACCUSE the deep remnant — sift them like wheat.
         if scheme is None:
             r = int(np.argmax(agg["deep_share"]))
             if self.cooldowns["accuse"] == 0 and agg["deep_share"][r] > 0.02:
                 scheme = ("accuse", r)
-        # 4. INCITE ruin where the remnant is absent — wreckage no seed
+        # 5. INCITE ruin where the remnant is absent — wreckage no seed
         #    can grow in.
         if scheme is None:
             score = env.strain * (1.0 - agg["remnant_share"])
@@ -122,6 +140,12 @@ class Adversary:
             env.vamphoric[r] = min(1.0, env.vamphoric[r] + 0.06 * strength)
             self.cooldowns["gild"] = 25
             detail = "golden chains — comfort for the strong church"
+        elif kind == "schism":
+            env.unity[r] = max(
+                0.05, env.unity[r] - cfg.schism_scheme_unity_cost * strength)
+            env.schism_pressure[r] += cfg.schism_scheme_pressure * strength
+            self.cooldowns["schism"] = 22
+            detail = "brothers set against brothers — division sown"
         elif kind == "accuse":
             accuse_region = r
             self.cooldowns["accuse"] = 18
@@ -134,6 +158,15 @@ class Adversary:
             env.strain[r] += 0.45 * strength
             self.cooldowns["incite"] = 20
             detail = "war stirred where no seed can grow"
+
+        # The distance load: every scheme is rebellion enacted. The
+        # breach widens where he works, and part of it sticks to the
+        # record — escalation, and the leash that hastens his own end.
+        load = cfg.scheme_distance_load * strength
+        env.distance[r] = min(1.0, env.distance[r] + load)
+        env.rebellion[r] = min(cfg.ratchet_cap,
+                               env.rebellion[r]
+                               + cfg.scheme_record_stick * load)
 
         events.append({"tick": tick, "region": env.names[r],
                        "type": "scheme",
