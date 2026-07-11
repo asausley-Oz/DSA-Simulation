@@ -495,6 +495,47 @@ none of it scripted.
 Ensemble (100 seeds, 800 ticks): 72% renewal / 18% consummation /
 9% parousia / 1% contested; the account paid in 86/100 histories.
 
+## v8.1: the Container, and the end of every world
+
+**The Container — the trap at the end.** The skin with the brittleness
+engineered out. Where the buyout's terminal product accumulates
+(skin × comfort × vamphoric), the coating becomes *architecture* — a
+habitat that does not resist exposure but **metabolizes** it. Every
+crack-channel is muted in proportion to containment: crises arrive as
+content, witness is indistinguishable from its simulacra, martyrdom
+trends instead of speaking, discipleship throttles (formation needs
+unmediated presence). It is self-reinforcing once begun, drained only
+by embodied gathering — the one practice the architecture cannot
+simulate — and it feeds the prince of the power of the air directly:
+the Container is his medium (Eph 2:2). It is the first delusion with
+its own real estate, and the substrate of the strong delusion: at the
+falling away, containment seals across the world (2 Thess 2:11 given
+a mechanism). Baudrillard's hyperreality as vamphoric architecture —
+the fourth-order simulacrum where the map generates the territory.
+
+In ensemble the entanglement is measurable: worlds that suffer the
+falling away end at containment ~0.54; all others ~0.12. The Container
+is at the end — a civilization builds its own strong delusion, the
+harvest dries inside it, patience exhausts, and the trap seals. The
+7-day world does not get out of it. The Shaking opens it from the
+other side: the one object the Container structurally cannot ingest
+is a resurrected body.
+
+**No world exits history.** What was called "renewal" is renamed to
+what it always was: **FULLNESS** — the harvest of the earth is ripe
+(Rev 14:15), the gospel has reached its fullness, *and then the end
+comes* (Matt 24:14). Every history ends in the consummation of the
+age — the Shaking — arriving one of three ways:
+
+| Verdict | How the same end arrives | Account | Remains |
+|---|---|---|---|
+| fullness | the harvest complete | paid | ~80% |
+| parousia | the days cut short amid tribulation | paid | ~68% |
+| consummation | the blind death | UNPAID — answered in the fall | ~36% |
+
+Ensemble (100 seeds, 800 ticks): 55% fullness / 21% consummation /
+19% parousia / 5% contested (the end not yet arrived).
+
 ## Endings are attractors, not appointments
 
 There is no `year >= 2030` check. A run terminates only when a state

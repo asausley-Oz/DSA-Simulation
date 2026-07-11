@@ -8,10 +8,12 @@ Tick order:
   4. demography (deaths, births with generational transmission, migration)
   5. record history; check state-only ending conditions
 
-There is no calendar anywhere in this loop. Endings are attractors, not
-appointments: a run terminates in CONSUMMATION (entropy saturates or the
-remnant goes extinct) or RENEWAL (a formed remnant becomes the culture and
-entropy collapses) — or simply runs out of ticks, still contested.
+There is no calendar anywhere in this loop, and no world exits history:
+every run ends in the consummation of the age — the Shaking — arriving
+one of three ways: CONSUMMATION (the blind death, the account unpaid),
+PAROUSIA (the days cut short amid the tribulation), or FULLNESS (the
+harvest complete, "and then the end will come," Matt 24:14). A run that
+hits the tick limit is merely contested — the end not yet arrived.
 """
 
 import numpy as np
@@ -63,7 +65,7 @@ class EmergentSimulation:
         self.tribulation_martyrs = 0   # the souls under the altar (Rev 6:9)
         self._harvest_ema = 0.0
         self._dry_streak = 0
-        self._ending_streak = {"consummation": 0, "renewal": 0}
+        self._ending_streak = {"consummation": 0, "fullness": 0}
 
     # ------------------------------------------------------------------
     def step(self):
@@ -149,9 +151,13 @@ class EmergentSimulation:
 
         # ---- 2. formation dynamics ------------------------------------
         # Remnant deepens slowly (faster under hardship), everyone else
-        # erodes toward the ambient comfort level.
+        # erodes toward the ambient comfort level. Discipleship needs
+        # unmediated presence: the Container throttles formation.
         hardship = (env.crisis_active + env.persecution)[reg]
-        pop.formation[remnant] += 0.004 + 0.006 * hardship[remnant]
+        throttle = (1.0 - cfg.container_formation_throttle
+                    * env.containment)[reg]
+        pop.formation[remnant] += (0.004 + 0.006 * hardship[remnant]) \
+            * throttle[remnant]
         pop.formation[nominal] -= 0.002 * env.comfort[reg][nominal]
         np.clip(pop.formation, 0.0, 1.0, out=pop.formation)
 
@@ -163,10 +169,14 @@ class EmergentSimulation:
 
         # THE SKIN: the secular coating grows only where the vamphoric
         # buyout has delivered its comfort — and not on the remnant.
+        # Inside the Container the coating is architecture: shocks are
+        # metabolized, not transmitted — every crack-channel is muted
+        # in proportion to containment.
+        transmit = (1.0 - env.containment)[reg]
         d_skin = (cfg.skin_growth * env.comfort[reg] * vamp
                   * (~pop.born).astype(float)
-                  - cfg.skin_crack_crisis * crisis_r
-                  - cfg.skin_crack_revival * revival_r)
+                  - cfg.skin_crack_crisis * crisis_r * transmit
+                  - cfg.skin_crack_revival * revival_r * transmit)
         pop.skin[alive] += d_skin[alive]
 
         # THE FLESH: the ancient default, fed slowly by the systems and
@@ -179,11 +189,15 @@ class EmergentSimulation:
         # The encounter: one conversation with someone who names the
         # drain and the fork shatters surface certainty — the skin
         # cracks in a chunk, and what lies beneath is the old cosmos.
+        # In the Container, witness is indistinguishable from its
+        # simulacra: the encounter loses force as containment grows.
         p_witness = (cfg.witness_contact_rate
                      * np.sqrt(np.clip(agg["deep_share"], 0, 1)))[reg]
         met_witness = alive & (rng.random(pop.capacity) < p_witness)
-        pop.skin[met_witness] -= cfg.skin_crack_witness
-        pop.flesh[met_witness] -= cfg.delusion_formation_clarity
+        pop.skin[met_witness] -= (cfg.skin_crack_witness
+                                  * transmit[met_witness])
+        pop.flesh[met_witness] -= (cfg.delusion_formation_clarity
+                                   * transmit[met_witness])
 
         np.clip(pop.skin, 0.0, 1.0, out=pop.skin)
         np.clip(pop.flesh, 0.0, 1.0, out=pop.flesh)
@@ -259,8 +273,9 @@ class EmergentSimulation:
                 # Martyrdom is exposure that cannot be argued with: the
                 # secular coating shatters across the region where the
                 # blood falls, and even the old distortion is chipped.
+                # In the Container the blood trends instead of speaking.
                 m_break = (cfg.martyr_delusion_break
-                           * martyr_share * 50.0)[reg]
+                           * martyr_share * 50.0)[reg] * transmit
                 pop.skin[alive] = np.clip(
                     pop.skin[alive] - m_break[alive], 0.0, 1.0)
                 pop.flesh[alive] = np.clip(
@@ -354,6 +369,7 @@ class EmergentSimulation:
             "awareness": float(env.awareness @ weights),
             "skin": float(agg_after["skin"] @ weights),
             "flesh_exposed": float(agg_after["flesh_exposed"] @ weights),
+            "containment": float(env.containment @ weights),
             "treasure": self.treasure,
             "wood_hay": self.wood_hay,
             "account": self.account,
@@ -543,9 +559,13 @@ class EmergentSimulation:
         refused = pop.alive & ~pop.born
         pop.flesh[refused] = np.clip(
             pop.flesh[refused] + cfg.strong_delusion, 0.0, 1.0)
-        # The restrainer removed — lawlessness unveiled (2 Thess 2:7).
+        # The restrainer removed — lawlessness unveiled (2 Thess 2:7) —
+        # and the strong delusion acquires its substrate: the Container
+        # seals across the world.
         env.distance = np.clip(env.distance + cfg.restrainer_removed,
                                0.0, 1.0)
+        env.containment = np.clip(
+            env.containment + cfg.falling_away_containment, 0.0, 1.0)
         # The adversary released for a little while (Rev 20:3).
         if self.adversary is not None:
             self.adversary.released = True
@@ -583,15 +603,15 @@ class EmergentSimulation:
             cfg.ratchet_floor_gain * row["rebellion"] + 0.08)
         if (row["remnant_share"] >= cfg.renewal_remnant
                 and row["distance"] <= renewal_ceiling):
-            self._ending_streak["renewal"] += 1
+            self._ending_streak["fullness"] += 1
         else:
-            self._ending_streak["renewal"] = 0
+            self._ending_streak["fullness"] = 0
         # After the great falling away the verdict is in: the remaining
         # arc is tribulation, not gradual renewal (2 Thess 2:8) — and
         # the tribulation is cut short for the sake of the elect
         # (Matt 24:22): the Parousia ends it with the remnant vindicated.
         if self.falling_away_tick is not None:
-            self._ending_streak["renewal"] = 0
+            self._ending_streak["fullness"] = 0
             if (self.ending is None and
                     self.tick - self.falling_away_tick
                     >= cfg.parousia_after):
@@ -609,19 +629,32 @@ class EmergentSimulation:
                 self._the_shaking("parousia")
                 return
 
+        # No world exits history: what was "renewal" is FULLNESS — the
+        # harvest complete, "and then the end will come" (Matt 24:14).
+        # Every verdict is the consummation of the age; they differ only
+        # in how the same end arrives and in what remains.
         sustain = {"consummation": cfg.consummation_sustain_ticks,
-                   "renewal": cfg.renewal_sustain_ticks}
+                   "fullness": cfg.renewal_sustain_ticks}
         for name, streak in self._ending_streak.items():
             if streak >= sustain[name] and self.ending is None:
                 self.ending = name
-                detail = (f"distance {row['distance']:.3f}, "
-                          f"remnant {row['remnant_share']:.3f}")
-                # Even a consummated world does not extinguish the seed:
-                # the bearer endures through the end (Gen 3:15).
-                bearer = np.flatnonzero(self.pop.alive & self.pop.seed)
-                if name == "consummation" and bearer.size:
-                    r_b = self.env.names[int(self.pop.region[bearer[0]])]
-                    detail += f"; the seed endures in {r_b}"
+                if name == "fullness":
+                    detail = (f"the harvest of the earth is ripe "
+                              f"(Rev 14:15) — remnant "
+                              f"{row['remnant_share']:.3f} at distance "
+                              f"{row['distance']:.3f}; the gospel has "
+                              "reached its fullness, and then the end "
+                              "comes (Matt 24:14)")
+                else:
+                    detail = (f"distance {row['distance']:.3f}, "
+                              f"remnant {row['remnant_share']:.3f}")
+                    # Even a consummated world does not extinguish the
+                    # seed: the bearer endures the end (Gen 3:15).
+                    bearer = np.flatnonzero(self.pop.alive & self.pop.seed)
+                    if bearer.size:
+                        r_b = self.env.names[
+                            int(self.pop.region[bearer[0]])]
+                        detail += f"; the seed endures in {r_b}"
                 self.env.events.append({
                     "tick": self.tick, "region": "GLOBAL",
                     "type": name, "detail": detail})
@@ -637,6 +670,13 @@ class EmergentSimulation:
         account_state = ("paid in full at the cross (TAV)"
                          if self.account_paid else
                          f"UNPAID — {self.account:.1f} answered in the fall")
+        pop_w = None
+        containment = float(self.env.containment.mean())
+        container_note = ""
+        if containment > 0.4:
+            container_note = (f"; the Container (containment "
+                              f"{containment:.2f}) is broken open from "
+                              "the other side")
         self.env.events.append({
             "tick": self.tick, "region": "GLOBAL",
             "type": "shaking",
@@ -644,7 +684,8 @@ class EmergentSimulation:
                        f"— verdict: {verdict}; the account "
                        f"{account_state}; treasure {self.treasure:.2f} "
                        f"vs wood-hay {self.wood_hay:.2f} -> "
-                       f"{remains:.0%} of all that was built remains; "
+                       f"{remains:.0%} of all that was built remains"
+                       f"{container_note}; "
                        f"the 8th day dawns on what cannot be shaken")})
 
     # ------------------------------------------------------------------
@@ -693,6 +734,7 @@ class EmergentSimulation:
             "falling_away_tick": self.falling_away_tick,
             "patience_open": self.patience_active,
             "final_skin": last["skin"],
+            "final_containment": last["containment"],
             "account": round(self.account, 2),
             "account_paid": self.account_paid,
             "treasure": round(self.treasure, 3),

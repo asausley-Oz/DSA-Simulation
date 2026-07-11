@@ -62,6 +62,8 @@ def plot_run(history, events, env_names, out_dir: Path):
             color="black", lw=1.5)
     ax.plot(history["tick"], history["flesh_exposed"], color="saddlebrown",
             lw=1.2, label="exposed flesh (old cosmos)")
+    ax.plot(history["tick"], history["containment"], color="darkviolet",
+            lw=1.5, label="containment (the trap)")
     ax.plot(history["tick"], history["unity"], label="unity")
     ax.plot(history["tick"], history["persecution"], label="persecution")
     ax.set_title("The apple: comfort, skin, exposed flesh")
@@ -98,8 +100,8 @@ def plot_run(history, events, env_names, out_dir: Path):
               "scheme": "tab:purple", "incarnation": "deepskyblue",
               "deicide": "darkred", "atonement": "navy",
               "falling_away": "saddlebrown", "parousia": "cyan",
-              "shaking": "magenta",
-              "consummation": "dimgray", "renewal": "gold"}
+              "shaking": "magenta", "container": "darkviolet",
+              "consummation": "dimgray", "fullness": "gold"}
     if not events.empty:
         region_order = list(env_names) + ["GLOBAL"]
         for _, ev in events.iterrows():
@@ -161,7 +163,7 @@ def main():
 
         if not args.no_plots:
             fig, axes = plt.subplots(1, 3, figsize=(16, 5))
-            colors = {"consummation": "tab:red", "renewal": "gold",
+            colors = {"consummation": "tab:red", "fullness": "gold",
                       "contested": "tab:blue", "parousia": "cyan"}
 
             counts = df["outcome"].value_counts()
@@ -226,7 +228,7 @@ def main():
         gs = fig.add_gridspec(2, 5, height_ratios=[1.4, 1])
 
         ax = fig.add_subplot(gs[0, :2])
-        pivot = (grid.assign(renew=(grid["outcome"] == "renewal"))
+        pivot = (grid.assign(renew=(grid["outcome"] == "fullness"))
                  .groupby([gy, gx])["renew"].mean().unstack())
         im = ax.imshow(pivot.values * 100, origin="lower", cmap="RdYlGn",
                        vmin=0, vmax=100, aspect="auto")
@@ -234,7 +236,7 @@ def main():
         ax.set_yticks(range(len(vy)), [str(v) for v in vy])
         ax.set_xlabel("witness_contact_rate (human witness)")
         ax.set_ylabel("nearness_pull (divine counter-movement)")
-        ax.set_title("Renewal share (%): witness x nearness")
+        ax.set_title("Fullness share (%): witness x nearness")
         for i in range(len(vy)):
             for j in range(len(vx)):
                 ax.text(j, i, f"{pivot.values[i, j]*100:.0f}",
@@ -243,12 +245,12 @@ def main():
 
         ax = fig.add_subplot(gs[0, 2:])
         med = grid.groupby([gx, gy]).agg(
-            renew=("outcome", lambda s: (s == "renewal").mean()),
+            renew=("outcome", lambda s: (s == "fullness").mean()),
             revivals=("n_revivals", "mean")).reset_index()
         ax.scatter(med["revivals"], med["renew"] * 100, c=med[gy],
                    cmap="viridis", s=60)
         ax.set_xlabel("mean revivals per history (cell average)")
-        ax.set_ylabel("renewal share (%)")
+        ax.set_ylabel("fullness share (%)")
         ax.set_title("Revival frequency vs. final outcome "
                      "(color = nearness_pull)")
         ax.grid(alpha=0.3)
@@ -258,7 +260,7 @@ def main():
             sub = lines[lines["parameter"] == param]
             stats = sub.groupby("value")["outcome"].value_counts(
                 normalize=True).unstack(fill_value=0)
-            for outcome, color in [("renewal", "gold"),
+            for outcome, color in [("fullness", "gold"),
                                    ("consummation", "tab:red"),
                                    ("contested", "tab:blue")]:
                 if outcome in stats:

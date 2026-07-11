@@ -71,7 +71,11 @@ class Adversary:
         breach = (cfg.adversary_from_rebellion * float(env.rebellion @ pop_w)
                   + cfg.adversary_from_distance * float(env.distance @ pop_w)
                   + cfg.adversary_from_empire
-                  * float(agg["empire_share"] @ pop_w))
+                  * float(agg["empire_share"] @ pop_w)
+                  # The prince of the power of the AIR (Eph 2:2): the
+                  # Container is his medium — its completion feeds him.
+                  + cfg.adversary_container_gain
+                  * float(env.containment @ pop_w))
         target = np.clip(breach, 0.0, 1.0) \
             * (1.0 - cfg.adversary_exposure_damp * self.exposure)
         if self.released:

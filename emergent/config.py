@@ -173,6 +173,27 @@ class EmergentConfig:
     vamphoric_flesh_gain: float = 0.006  # exposed flesh feeds the parasite
     skin_inheritance: float = 0.6    # raised inside the parents' coating
 
+    # --- the Container (v8.1): the trap at the end ---
+    # The skin with the brittleness engineered out. Where the buyout's
+    # terminal product accumulates (skin x comfort x vamphoric), the
+    # coating becomes ARCHITECTURE: a habitat that does not resist
+    # exposure but metabolizes it. Crises arrive as content; witness is
+    # indistinguishable from its simulacra; martyrdom trends. Every
+    # crack-channel is muted in proportion to containment — the first
+    # delusion with its own real estate, and the substrate of the
+    # strong delusion (2 Thess 2:11). Its one dependency it cannot
+    # remove: its subjects still have bodies. Embodied gathering is the
+    # counter-practice, and the resurrected body is the one object it
+    # structurally cannot ingest — the 7-day world does not get out of
+    # the Container; the Shaking opens it from the other side.
+    container_growth: float = 0.008   # skin x comfort x vamphoric -> architecture
+    container_self: float = 0.010     # the trap builds itself once begun
+    container_decay: float = 0.010    # embodied gathering, the counter-practice
+    container_threshold: float = 0.70  # the trap completes (logged event)
+    container_formation_throttle: float = 0.5  # discipleship needs presence
+    falling_away_containment: float = 0.30  # strong delusion gets its substrate
+    adversary_container_gain: float = 0.25  # the air is his medium (Eph 2:2)
+
     # --- the Account and the 8th day (Macro Cup) ---
     # A global ledger accumulates every unit of rebellion ever enacted —
     # it never decays and is never erased. At the deicide it is

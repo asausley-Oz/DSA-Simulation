@@ -55,6 +55,9 @@ class Environment:
         # regional mean, refreshed each tick from population aggregates.
         self.delusion = np.full(n, 0.30)
         self._hardened = np.zeros(n, dtype=bool)  # for hardening events
+        # The Container: the skin become architecture (v8.1).
+        self.containment = np.zeros(n)
+        self._contained = np.zeros(n, dtype=bool)  # for container events
 
         # --- accumulators (the "pressure gauges" behind events) ---
         self.strain = np.zeros(n)            # -> crisis
@@ -218,6 +221,33 @@ class Environment:
         # broken person-by-person in the simulation layer); the region's
         # ambient delusion is simply their mean.
         self.delusion = agg["delusion"]
+
+        # --- the Container: the trap at the end ----------------------
+        # Grows from the buyout's terminal product (skin x comfort x
+        # vamphoric) and, once begun, builds itself. Drained only by
+        # embodied gathering — the counter-practice the architecture
+        # cannot simulate.
+        d_cont = (cfg.container_growth * agg["skin"]
+                  * self.comfort * self.vamphoric
+                  + cfg.container_self * self.containment
+                  * (1.0 - self.containment)
+                  - cfg.container_decay
+                  * agg["remnant_share"] * self.unity)
+        self.containment = np.clip(self.containment + d_cont, 0.0, 1.0)
+
+        for r in range(self.n):
+            if self.containment[r] >= cfg.container_threshold:
+                if not self._contained[r]:
+                    self._contained[r] = True
+                    new_events.append({
+                        "tick": tick, "region": self.names[r],
+                        "type": "container",
+                        "detail": (f"the coating has become architecture "
+                                   f"(containment {self.containment[r]:.2f})"
+                                   " — exposure is now metabolized, "
+                                   "not transmitted")})
+            elif self.containment[r] < cfg.container_threshold - 0.15:
+                self._contained[r] = False
 
         # Hardening events: a region crossing deep blindness is logged —
         # the drain now runs undetected, and hardship will be misread.
