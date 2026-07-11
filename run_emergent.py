@@ -203,21 +203,22 @@ def main():
     if args.cartography:
         print("Mapping the eschatological parameter space...\n")
 
-        # --- 2-D grid: human witness x divine pull ---------------------
-        gx, gy = "witness_contact_rate", "nearness_pull"
-        vx = [0.10, 0.17, 0.24, 0.31, 0.38]
-        vy = [0.025, 0.035, 0.045, 0.055, 0.065]
+        # --- 2-D grid: the race that defines the end -------------------
+        # Does the witness outrun the Container?
+        gx, gy = "container_growth", "witness_contact_rate"
+        vx = [0.0, 0.004, 0.008, 0.012, 0.016]
+        vy = [0.10, 0.19, 0.28, 0.37, 0.46]
         print(f"Grid: {gx} x {gy} ({len(vx)}x{len(vy)} cells x 8 seeds)")
         grid = run_grid(cfg, gx, vx, gy, vy, seeds_per_cell=8)
         grid.to_csv(out_dir / "eschatology_grid.csv", index=False)
 
-        # --- phase lines over theology-laden knobs ---------------------
+        # --- phase lines over the finished cosmos's knobs --------------
         sweeps = {
+            "toil": [0.0, 0.15, 0.25, 0.35, 0.50],
             "nearness_pull": [0.025, 0.035, 0.045, 0.055, 0.065],
-            "witness_contact_rate": [0.10, 0.17, 0.24, 0.31, 0.38],
-            "revival_ignition_prob": [0.04, 0.08, 0.12, 0.20, 0.30],
+            "container_growth": [0.0, 0.004, 0.008, 0.012, 0.016],
             "ratchet_rate": [0.10, 0.16, 0.22, 0.30, 0.40],
-            "bent": [0.004, 0.005, 0.006, 0.007, 0.008],
+            "tribulation_apostasy": [0.0, 0.10, 0.20, 0.30, 0.40],
         }
         print("Phase lines: 5 parameters x 5 values x 10 seeds")
         lines = run_phase_lines(cfg, sweeps, seeds_per_value=10)
@@ -234,9 +235,9 @@ def main():
                        vmin=0, vmax=100, aspect="auto")
         ax.set_xticks(range(len(vx)), [str(v) for v in vx])
         ax.set_yticks(range(len(vy)), [str(v) for v in vy])
-        ax.set_xlabel("witness_contact_rate (human witness)")
-        ax.set_ylabel("nearness_pull (divine counter-movement)")
-        ax.set_title("Fullness share (%): witness x nearness")
+        ax.set_xlabel("container_growth (the trap)")
+        ax.set_ylabel("witness_contact_rate (the encounter)")
+        ax.set_title("Fullness share (%): the witness vs the Container")
         for i in range(len(vy)):
             for j in range(len(vx)):
                 ax.text(j, i, f"{pivot.values[i, j]*100:.0f}",
@@ -252,7 +253,7 @@ def main():
         ax.set_xlabel("mean revivals per history (cell average)")
         ax.set_ylabel("fullness share (%)")
         ax.set_title("Revival frequency vs. final outcome "
-                     "(color = nearness_pull)")
+                     "(color = witness_contact_rate)")
         ax.grid(alpha=0.3)
 
         for k, (param, values) in enumerate(sweeps.items()):
@@ -262,6 +263,7 @@ def main():
                 normalize=True).unstack(fill_value=0)
             for outcome, color in [("fullness", "gold"),
                                    ("consummation", "tab:red"),
+                                   ("parousia", "cyan"),
                                    ("contested", "tab:blue")]:
                 if outcome in stats:
                     ax.plot(stats.index, stats[outcome] * 100, "o-",
