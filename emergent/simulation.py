@@ -44,6 +44,17 @@ class EmergentSimulation:
         # The store of faith: every believer who lives and dies before
         # the atonement is counted into the covering (Heb 11:39-40).
         self.faith_store = 0.0
+        # THE ACCOUNT (Macro Cup): every unit of rebellion ever enacted,
+        # never decaying, never erased — presented and PAID at the
+        # deicide (Col 2:14). The TAV seals the old aeon's condemnation.
+        self.account = 0.0
+        self.account_paid = False
+        # THE TWO SUBSTANCES: what the passing age builds (wood-hay)
+        # and what is laid up unshakeable (treasure) — divine labor,
+        # the faithful dead, the martyrs banked double. The Shaking
+        # measures what remains (1 Cor 3:12-15, Heb 12:27).
+        self.treasure = 0.0
+        self.wood_hay = 0.0
         # Patience (2 Pet 3:9): post-atonement, the end is held open
         # while the world still responds. Exhausted patience ends in
         # the great falling away (2 Thess 2).
@@ -79,10 +90,13 @@ class EmergentSimulation:
         if incarnate is not None:
             env.nearness[incarnate] = max(env.nearness[incarnate],
                                           cfg.incarnation_nearness_hold)
-            # The Light in person: delusion collapses where He stands.
+            # The Light in person: both layers of blindness collapse
+            # where He stands — coating and ancient distortion alike.
             local = alive & (reg == incarnate)
-            pop.delusion[local] = np.maximum(
-                0.0, pop.delusion[local] - cfg.incarnate_delusion_break)
+            pop.skin[local] = np.maximum(
+                0.0, pop.skin[local] - cfg.incarnate_delusion_break)
+            pop.flesh[local] = np.maximum(
+                0.0, pop.flesh[local] - cfg.incarnate_delusion_break)
             # The presence names the enemy daily.
             if self.adversary is not None:
                 self.adversary.exposure = min(
@@ -141,31 +155,38 @@ class EmergentSimulation:
         pop.formation[nominal] -= 0.002 * env.comfort[reg][nominal]
         np.clip(pop.formation, 0.0, 1.0, out=pop.formation)
 
-        # ---- 2b. delusion: personal blindness --------------------------
-        # Grows out of the systems around each person (dampened by their
-        # own formation); broken person-to-person by encountering a
-        # witness, and ambiently when crisis or revival exposes the lie.
+        # ---- 2b. blindness in two layers (the skin of the apple) -------
         crisis_r = env.crisis_active[reg]
         revival_r = env.revival_active[reg]
         whisper = (cfg.adversary_delusion_gain * self.adversary.power
                    if self.adversary is not None else 0.0)
-        d_del = ((cfg.delusion_growth_vamphoric * vamp
-                  + cfg.delusion_growth_comfort * env.comfort[reg]
-                  + whisper)
-                 * (1.0 - 0.5 * pop.formation)
-                 - cfg.delusion_exposure_crisis * crisis_r
-                 - cfg.delusion_exposure_revival * revival_r)
-        pop.delusion[alive] += d_del[alive]
+
+        # THE SKIN: the secular coating grows only where the vamphoric
+        # buyout has delivered its comfort — and not on the remnant.
+        d_skin = (cfg.skin_growth * env.comfort[reg] * vamp
+                  * (~pop.born).astype(float)
+                  - cfg.skin_crack_crisis * crisis_r
+                  - cfg.skin_crack_revival * revival_r)
+        pop.skin[alive] += d_skin[alive]
+
+        # THE FLESH: the ancient default, fed slowly by the systems and
+        # the whisper; only discipleship reworks it.
+        d_flesh = ((cfg.flesh_growth * vamp + whisper)
+                   * (1.0 - 0.5 * pop.formation))
+        pop.flesh[alive] += d_flesh[alive]
+        pop.flesh[remnant] -= cfg.flesh_clarity * pop.formation[remnant]
+
         # The encounter: one conversation with someone who names the
-        # drain and the fork — blindness breaks one person at a time.
+        # drain and the fork shatters surface certainty — the skin
+        # cracks in a chunk, and what lies beneath is the old cosmos.
         p_witness = (cfg.witness_contact_rate
                      * np.sqrt(np.clip(agg["deep_share"], 0, 1)))[reg]
         met_witness = alive & (rng.random(pop.capacity) < p_witness)
-        pop.delusion[met_witness] -= cfg.witness_break
-        # The formed see ever clearer.
-        pop.delusion[remnant] -= (cfg.delusion_formation_clarity
-                                  * pop.formation[remnant])
-        np.clip(pop.delusion, 0.0, 1.0, out=pop.delusion)
+        pop.skin[met_witness] -= cfg.skin_crack_witness
+        pop.flesh[met_witness] -= cfg.delusion_formation_clarity
+
+        np.clip(pop.skin, 0.0, 1.0, out=pop.skin)
+        np.clip(pop.flesh, 0.0, 1.0, out=pop.flesh)
 
         # ---- 3. conversion (contact + receptivity + revival cascade) --
         # Awareness gates turning PER PERSON: contact and openness cannot
@@ -175,7 +196,7 @@ class EmergentSimulation:
         contact = (agg["remnant_share"]
                    * np.maximum(agg["remnant_formation"], 0.2))
         boost = 1.0 + cfg.revival_conversion_boost * env.revival_active
-        aware_i = 1.0 - cfg.awareness_blindness_cap * pop.delusion
+        aware_i = pop.awareness()
         p_conv = ((cfg.conversion_base * contact * env.receptivity
                    * boost)[reg]
                   * (0.05 + 0.95 * aware_i))
@@ -221,21 +242,29 @@ class EmergentSimulation:
             martyr_share = m_count / np.maximum(agg["pop"], 1.0)
             in_tribulation = (self.falling_away_tick is not None
                               and cfg.tribulation_martyr_mute)
+            # Whatever the old world does with the blood, the martyrs
+            # are banked double in the unshakeable substance — treasure
+            # where moth and rust do not destroy (Matt 6:20).
+            self.treasure += (cfg.treasure_martyr
+                              * pop.formation[martyred].sum() / cfg.n_agents)
             if in_tribulation:
                 # Rev 13:7 — it is given to him to conquer the saints:
                 # in the tribulation the martyr seed is muted. The blood
                 # falls on ground held by strong delusion and bears no
                 # fruit until the vindication. The souls wait under the
-                # altar (Rev 6:9).
+                # altar (Rev 6:9) — but their treasure is banked in full.
                 self.tribulation_martyrs += counters["martyrs"]
             else:
                 env.martyr_seed(martyr_share * 50.0)
-                # Martyrdom is exposure that cannot be argued with:
-                # delusion breaks across the region where the blood falls.
+                # Martyrdom is exposure that cannot be argued with: the
+                # secular coating shatters across the region where the
+                # blood falls, and even the old distortion is chipped.
                 m_break = (cfg.martyr_delusion_break
                            * martyr_share * 50.0)[reg]
-                pop.delusion[alive] = np.clip(
-                    pop.delusion[alive] - m_break[alive], 0.0, 1.0)
+                pop.skin[alive] = np.clip(
+                    pop.skin[alive] - m_break[alive], 0.0, 1.0)
+                pop.flesh[alive] = np.clip(
+                    pop.flesh[alive] - 0.5 * m_break[alive], 0.0, 1.0)
             # Martyrs weigh double in the store of faith.
             if self.atonement_tick is None:
                 self.faith_store += (cfg.martyr_faith_weight
@@ -265,10 +294,23 @@ class EmergentSimulation:
         pop.age[pop.alive] += 1
         died = pop.deaths(env.crisis_active)
         deaths = int(died.size)
-        # The faithful dead are counted into the covering to come.
-        if self.atonement_tick is None and deaths:
+        if deaths:
             faithful = died[pop.born[died]]
-            self.faith_store += pop.formation[faithful].sum() / cfg.n_agents
+            banked = pop.formation[faithful].sum() / cfg.n_agents
+            # The faithful dead bank their formation as treasure — and,
+            # before the atonement, into the covering to come.
+            self.treasure += cfg.treasure_death * banked
+            if self.atonement_tick is None:
+                self.faith_store += banked
+
+        # The two ledgers of the age: the Account fills with every
+        # tick's rebellion; wood-hay with the comfort-economy's output;
+        # treasure with the remnant's divine labor.
+        weights_now = agg["pop"] / max(agg["pop"].sum(), 1.0)
+        self.account += env.last_rebellion_flux
+        self.wood_hay += cfg.wood_hay_rate * float(env.comfort @ weights_now)
+        self.treasure += (cfg.treasure_labor
+                          * float(agg["labor_share"] @ weights_now))
         births = pop.births(env.comfort)
         moved = pop.migrate(env.attractiveness(), env.neighbors)
 
@@ -310,6 +352,11 @@ class EmergentSimulation:
             "receptivity": float(env.receptivity @ weights),
             "delusion": float(env.delusion @ weights),
             "awareness": float(env.awareness @ weights),
+            "skin": float(agg_after["skin"] @ weights),
+            "flesh_exposed": float(agg_after["flesh_exposed"] @ weights),
+            "treasure": self.treasure,
+            "wood_hay": self.wood_hay,
+            "account": self.account,
             "persecution": float(env.persecution @ weights),
             "strain": float(env.strain @ weights),
             "remnant_share": float(agg_after["remnant_share"] @ weights),
@@ -427,23 +474,31 @@ class EmergentSimulation:
         env.nearness_floor_bonus = cfg.atonement_nearness_floor_gain
         # Grace now covers part of what would otherwise stick.
         env.grace_factor = cfg.atonement_grace
-        # The Light has come — delusion breaks worldwide, retroactively
-        # brighter for every faithful life laid up in the store.
-        self.pop.delusion = np.clip(
-            self.pop.delusion - light, 0.0, 1.0)
+        # The Light has come — both layers break worldwide,
+        # retroactively brighter for every faithful life in the store.
+        self.pop.skin = np.clip(self.pop.skin - light, 0.0, 1.0)
+        self.pop.flesh = np.clip(self.pop.flesh - light, 0.0, 1.0)
         # The accuser disarmed (Col 2:15).
         if self.adversary is not None:
             self.adversary.disarmed = True
 
         self.atonement_tick = self.tick
         self.incarnation_region = None
+        # THE TAV — the final letter. The Account is not erased: it is
+        # presented and PAID in full (Col 2:14, the record nailed to the
+        # cross), and the same stroke seals the old aeon's condemnation
+        # (John 12:31). From this tick the passing of the first heavens
+        # and earth is irreversible; only the Shaking remains.
+        self.account_paid = True
         # The patience of God begins: the end held open for response.
         if self.cfg.patience:
             self.patience_active = True
         env.events.append({
             "tick": self.tick, "region": env.names[vessel],
             "type": "atonement",
-            "detail": (f"sprung by {cause}; store of faith "
+            "detail": (f"sprung by {cause}; the TAV — account of "
+                       f"{self.account:.1f} presented and paid in full, "
+                       f"the old aeon's passing sealed; store of faith "
                        f"{self.faith_store:.2f} -> record cancelled "
                        f"{clear:.0%}, light {light:.2f}")})
 
@@ -482,10 +537,12 @@ class EmergentSimulation:
                     & (pop.formation < cfg.falling_away_formation_bar))
         n_fallen = int(lukewarm.sum())
         pop.born[lukewarm] = False
-        # Strong delusion sent on those who refused to love the truth.
+        # Strong delusion sent on those who refused to love the truth —
+        # it strikes the FLESH: not a secular coating but a deep,
+        # near-irreversible sealing of the ancient distortion.
         refused = pop.alive & ~pop.born
-        pop.delusion[refused] = np.clip(
-            pop.delusion[refused] + cfg.strong_delusion, 0.0, 1.0)
+        pop.flesh[refused] = np.clip(
+            pop.flesh[refused] + cfg.strong_delusion, 0.0, 1.0)
         # The restrainer removed — lawlessness unveiled (2 Thess 2:7).
         env.distance = np.clip(env.distance + cfg.restrainer_removed,
                                0.0, 1.0)
@@ -549,6 +606,7 @@ class EmergentSimulation:
                                f"the altar answered, the lawless one "
                                "destroyed by the appearance of His "
                                "coming")})
+                self._the_shaking("parousia")
                 return
 
         sustain = {"consummation": cfg.consummation_sustain_ticks,
@@ -567,6 +625,27 @@ class EmergentSimulation:
                 self.env.events.append({
                     "tick": self.tick, "region": "GLOBAL",
                     "type": name, "detail": detail})
+                self._the_shaking(name)
+
+    def _the_shaking(self, verdict: str):
+        """Every history ends in the same event (Hag 2:6, Heb 12:27):
+        the old heavens and earth are shaken; the verdicts differ, the
+        shaking does not. What cannot be shaken remains — the fire
+        tests each world's work (1 Cor 3:12-15) — and the 8th day
+        dawns on the remainder."""
+        remains = self.treasure / max(self.treasure + self.wood_hay, 1e-9)
+        account_state = ("paid in full at the cross (TAV)"
+                         if self.account_paid else
+                         f"UNPAID — {self.account:.1f} answered in the fall")
+        self.env.events.append({
+            "tick": self.tick, "region": "GLOBAL",
+            "type": "shaking",
+            "detail": (f"once more the heavens and the earth are shaken "
+                       f"— verdict: {verdict}; the account "
+                       f"{account_state}; treasure {self.treasure:.2f} "
+                       f"vs wood-hay {self.wood_hay:.2f} -> "
+                       f"{remains:.0%} of all that was built remains; "
+                       f"the 8th day dawns on what cannot be shaken")})
 
     # ------------------------------------------------------------------
     def run(self, verbose: bool = True) -> pd.DataFrame:
@@ -613,6 +692,13 @@ class EmergentSimulation:
             "seed_fulfilled": self.incarnation_tick is not None,
             "falling_away_tick": self.falling_away_tick,
             "patience_open": self.patience_active,
+            "final_skin": last["skin"],
+            "account": round(self.account, 2),
+            "account_paid": self.account_paid,
+            "treasure": round(self.treasure, 3),
+            "wood_hay": round(self.wood_hay, 3),
+            "remains_fraction": round(
+                self.treasure / max(self.treasure + self.wood_hay, 1e-9), 4),
             "schemes_run": (dict(self.adversary.schemes_run)
                             if self.adversary else {}),
             "events_by_type": by_type,

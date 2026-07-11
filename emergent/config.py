@@ -150,6 +150,48 @@ class EmergentConfig:
     hardening_threshold: float = 0.85         # regional mean logged as event
     delusion_inheritance: float = 0.6         # raised inside the parents' frame
 
+    # --- the skin of the apple (SCC): two-layer blindness ---
+    # Blindness is not one substance. The SKIN is the secular coating —
+    # historically thin, grown only where the vamphoric buyout of toil
+    # has succeeded (comfort delivered by the system); it blocks hearing
+    # entirely, but it is brittle: shocks and witness crack it in
+    # chunks, and what it cracks INTO is not neutrality but the FLESH —
+    # the ancient three-realm default (eternity set in the heart,
+    # Eccl 3:11). The flesh distorts what is heard but leaves entry
+    # points (curse, spirits, sacrifice are words it already knows);
+    # it is also the parasite's oldest home turf, so newly exposed
+    # flesh feeds vamphoric folk-religion — crack a secular region and
+    # you get the double surge: conversions AND occultism together.
+    # Only discipleship reworks the flesh, slowly.
+    skin_growth: float = 0.018       # comfort x vamphoric: the buyout coating
+    skin_crack_crisis: float = 0.05  # shocks flake the coating in chunks
+    skin_crack_witness: float = 0.45  # one encounter shatters surface certainty
+    skin_crack_revival: float = 0.08
+    flesh_growth: float = 0.004      # the pagan default, civilizationally slow
+    flesh_clarity: float = 0.012     # only discipleship reworks cosmology
+    flesh_opacity: float = 0.55      # flesh distorts hearing; entry points remain
+    vamphoric_flesh_gain: float = 0.006  # exposed flesh feeds the parasite
+    skin_inheritance: float = 0.6    # raised inside the parents' coating
+
+    # --- the Account and the 8th day (Macro Cup) ---
+    # A global ledger accumulates every unit of rebellion ever enacted —
+    # it never decays and is never erased. At the deicide it is
+    # PRESENTED AND PAID (Col 2:14, the record nailed to the cross) —
+    # the TAV, the final letter: the same stroke that pays the account
+    # seals the old aeon's condemnation (John 12:31). From Eden onward
+    # every history also builds two kinds of substance: WOOD-HAY (the
+    # comfort-economy of the passing age) and TREASURE (unshakeable
+    # substance: divine labor, the formation of the faithful dead, the
+    # martyrs banked double — laid up where moth and rust do not
+    # destroy; tribulation martyrs bear no fruit in the old world but
+    # bank fully in the new). Every verdict ends in the same event: the
+    # SHAKING (Hag 2:6, Heb 12:27) — the old heavens and earth pass,
+    # and what remains is measured. The 8th day dawns on the remainder.
+    treasure_labor: float = 0.02     # divine labor banks unshakeable substance
+    treasure_martyr: float = 2.0     # the martyrs banked double
+    treasure_death: float = 1.0      # the faithful dead bank their formation
+    wood_hay_rate: float = 0.005     # the passing age's output, per comfort
+
     # --- receptivity / conversion ---
     receptivity_relax: float = 0.10  # speed receptivity tracks its target
     conversion_base: float = 0.10    # contact-conversion coefficient

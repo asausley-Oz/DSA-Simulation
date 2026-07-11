@@ -84,9 +84,10 @@ class Environment:
 
     @property
     def awareness(self) -> np.ndarray:
-        """Awareness of condition — the precondition of turning.
-        Complete blindness is possible; full clarity is not guaranteed."""
-        return 1.0 - self.cfg.awareness_blindness_cap * self.delusion
+        """Awareness of condition — the precondition of turning. The
+        mirror holds combined blindness (skin-blocked + flesh-distorted
+        hearing), refreshed from agent aggregates each tick."""
+        return 1.0 - self.delusion
 
     def attractiveness(self) -> np.ndarray:
         """What migrants move toward: low entropy, no crisis, some comfort."""
@@ -147,6 +148,10 @@ class Environment:
             self.distance + rebellion_flux - nearness_flux + diff,
             distance_floor, 1.0)
 
+        # Exposed for the Account: the world's rebellion this tick.
+        pop_w = agg["pop"] / max(agg["pop"].sum(), 1.0)
+        self.last_rebellion_flux = float(rebellion_flux @ pop_w)
+
         # --- nearness: incremental intimacy, departure, visitation ------
         # God draws near to the broken and to the praying remnant; the
         # movement is toward humanity even in rebellion, but comfort that
@@ -185,6 +190,7 @@ class Environment:
         d_vamp = (cfg.vamphoric_growth *
                   (0.5 * self.distance + 1.5 * agg["empire_share"]
                    + cfg.vamphoric_comfort_gain * self.comfort)
+                  + cfg.vamphoric_flesh_gain * agg["flesh_exposed"]
                   - cfg.vamphoric_decay *
                   (0.5 * self.unity + agg["labor_share"]))
         self.vamphoric = np.clip(self.vamphoric + d_vamp, 0.0, 1.0)

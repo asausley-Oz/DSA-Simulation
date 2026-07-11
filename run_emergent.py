@@ -58,12 +58,14 @@ def plot_run(history, events, env_names, out_dir: Path):
     ax = axes[1, 0]
     ax.plot(history["tick"], history["comfort"], label="comfort")
     ax.plot(history["tick"], history["receptivity"], label="receptivity")
-    ax.plot(history["tick"], history["delusion"], label="delusion",
+    ax.plot(history["tick"], history["skin"], label="skin (secular coat)",
             color="black", lw=1.5)
+    ax.plot(history["tick"], history["flesh_exposed"], color="saddlebrown",
+            lw=1.2, label="exposed flesh (old cosmos)")
     ax.plot(history["tick"], history["unity"], label="unity")
     ax.plot(history["tick"], history["persecution"], label="persecution")
-    ax.set_title("The secular cycle: comfort, delusion, receptivity")
-    ax.legend(fontsize=8)
+    ax.set_title("The apple: comfort, skin, exposed flesh")
+    ax.legend(fontsize=7)
     ax.grid(alpha=0.3)
 
     ax = axes[1, 1]
@@ -96,6 +98,7 @@ def plot_run(history, events, env_names, out_dir: Path):
               "scheme": "tab:purple", "incarnation": "deepskyblue",
               "deicide": "darkred", "atonement": "navy",
               "falling_away": "saddlebrown", "parousia": "cyan",
+              "shaking": "magenta",
               "consummation": "dimgray", "renewal": "gold"}
     if not events.empty:
         region_order = list(env_names) + ["GLOBAL"]

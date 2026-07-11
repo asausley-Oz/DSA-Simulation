@@ -444,6 +444,57 @@ Ensemble (100 seeds, 800 ticks): **79% renewal / 12% consummation /
 and every parousia world. Our own world, per CDT, reads as a history
 inside the patience window — the contest deliberately held open.
 
+## v8: the Account, the 8th day, and the skin of the apple
+
+**The Account (Macro Cup).** A global ledger accumulates every unit of
+rebellion ever enacted — never decaying, never erased. At the deicide
+it is *presented and paid in full* (Col 2:14, the record nailed to the
+cross): the TAV, the final letter. The same stroke that pays the
+account seals the old aeon's condemnation (John 12:31) — from that
+tick the passing of the first heavens and earth is irreversible.
+Worlds that fall before the fullness of time die with the account
+UNPAID, answered in their fall.
+
+**The two substances.** Every history builds wood-hay (the
+comfort-economy of the passing age) and treasure (unshakeable
+substance: divine labor, the formation of the faithful dead, the
+martyrs banked double — including tribulation martyrs, whose fruit is
+muted in the old world but banked in full in the new; Matt 6:20).
+
+**The Shaking (Hag 2:6, Heb 12:27, 1 Cor 3:12-15).** Every history
+now ends in the same event, whatever its verdict: the old heavens and
+earth are shaken, the fire tests each world's work, and what remains
+is measured. Renewal, consummation, and parousia are verdicts *within*
+the shaking, not alternatives to it. The ensemble gradient of the
+remains-fraction is the theology made measurable: renewal worlds keep
+~79% of all they built, parousia worlds ~59%, consummated worlds ~36%
+— even a doomed world's faithful dead were counted; nothing offered
+is lost. The 8th day dawns on the remainder.
+
+**The skin of the apple (SCC): blindness in two layers.** The single
+delusion scalar becomes two substances with different material
+properties. The SKIN — the secular coating — grows only where the
+vamphoric buyout of toil has delivered its comfort; it blocks hearing
+entirely, but it is brittle: crises flake it, one witness encounter
+shatters it in a chunk, martyrdom breaks it region-wide. And what it
+cracks into is not neutrality but the FLESH — the ancient three-realm
+default (Eccl 3:11), inherited generation to generation, which
+distorts hearing but leaves entry points (curse, spirits, sacrifice
+are words it already knows) and is reworked only by slow discipleship.
+Exposed flesh feeds vamphoric folk-religion, so cracking a secular
+region produces the **double surge**: conversions and occultism
+together. Strong delusion at the falling away strikes the flesh — a
+deep sealing, not a coating.
+
+A single history shows the modern-world signature end to end: skin
+0.03 → 0.22 across a comfort era, shattered to 0.004 in one crisis
+epoch, exposed flesh erupting 0.40 → 0.87 with vamphoric load at
+0.99 — secularization, the crack, and the re-paganized battlefield,
+none of it scripted.
+
+Ensemble (100 seeds, 800 ticks): 72% renewal / 18% consummation /
+9% parousia / 1% contested; the account paid in 86/100 histories.
+
 ## Endings are attractors, not appointments
 
 There is no `year >= 2030` check. A run terminates only when a state

@@ -29,7 +29,11 @@ class Population:
         self.born = np.zeros(capacity, dtype=bool)    # born-from-above
         self.empire = np.zeros(capacity, dtype=bool)  # fully captured agents
         self.martyr = np.zeros(capacity, dtype=bool)  # died as martyr
-        self.delusion = np.zeros(capacity, dtype=np.float64)  # personal blindness
+        # The skin of the apple: blindness in two layers. The skin is
+        # the secular coating (brittle, recent); the flesh is the
+        # ancient three-realm default (deep, distorting, entry-pointed).
+        self.skin = np.zeros(capacity, dtype=np.float64)
+        self.flesh = np.zeros(capacity, dtype=np.float64)
         self.seed = np.zeros(capacity, dtype=bool)    # bearer of the promise
 
         self.seed_passes = 0   # times the seed passed at a bearer's death
@@ -61,8 +65,9 @@ class Population:
             self.agency[sl] = rng.uniform(0.6, 1.0, count)
             self.pride[sl] = rng.beta(2, 5, count)
             self.born[sl] = rng.random(count) < init.born_rate
-            self.delusion[sl] = np.clip(
-                rng.normal(0.30, 0.12, count), 0.0, 0.9)
+            # Pre-modern worlds: no secular skin yet, flesh default on.
+            self.skin[sl] = np.clip(rng.normal(0.03, 0.02, count), 0.0, 0.3)
+            self.flesh[sl] = np.clip(rng.normal(0.30, 0.12, count), 0.0, 0.9)
             idx += count
 
             self.region_capacity[r] = int(count * cfg.capacity_factor)
@@ -88,13 +93,15 @@ class Population:
             living = np.flatnonzero(self.alive)
             if living.size == 0:
                 return "none"
-            bearer = living[int(np.argmin(self.delusion[living]))]
+            blindness = self.skin[living] + self.flesh[living]
+            bearer = living[int(np.argmin(blindness))]
             self.born[bearer] = True
             how = "raised"
         self.seed[bearer] = True
         self.formation[bearer] = max(self.formation[bearer],
                                      cfg.seed_formation_floor)
-        self.delusion[bearer] = min(self.delusion[bearer], 0.1)
+        self.skin[bearer] = 0.0
+        self.flesh[bearer] = min(self.flesh[bearer], 0.1)
         self.empire[bearer] = False
         if not initial:
             self.seed_passes += 1
@@ -146,9 +153,20 @@ class Population:
             reg, weights=np.where(remnant_mask, self.formation, 0.0),
             minlength=n_regions)
 
-        # Regional mean delusion — the ambient blindness of the culture.
-        del_sum = np.bincount(
-            reg, weights=np.where(alive, self.delusion, 0.0),
+        # Regional ambient blindness: skin blocks hearing entirely,
+        # flesh distorts it but leaves entry points.
+        aware = self.awareness()
+        blind_sum = np.bincount(
+            reg, weights=np.where(alive, 1.0 - aware, 0.0),
+            minlength=n_regions)
+        # Exposed flesh — the ancient battlefield reopened wherever the
+        # skin has cracked. The parasite's home turf.
+        exposed_sum = np.bincount(
+            reg, weights=np.where(alive,
+                                  self.flesh * (1.0 - self.skin), 0.0),
+            minlength=n_regions)
+        skin_sum = np.bincount(
+            reg, weights=np.where(alive, self.skin, 0.0),
             minlength=n_regions)
 
         return {
@@ -158,8 +176,16 @@ class Population:
             "labor_share": labor / safe_pop,
             "deep_share": deep / safe_pop,
             "remnant_formation": rem_form_sum / np.maximum(remnant, 1.0),
-            "delusion": del_sum / safe_pop,
+            "delusion": blind_sum / safe_pop,
+            "flesh_exposed": exposed_sum / safe_pop,
+            "skin": skin_sum / safe_pop,
         }
+
+    def awareness(self) -> np.ndarray:
+        """Per-agent awareness: the skin blocks hearing entirely; the
+        flesh distorts what is heard but leaves entry points open."""
+        return ((1.0 - self.skin)
+                * (1.0 - self.cfg.flesh_opacity * self.flesh))
 
     def voltage(self) -> np.ndarray:
         """Effective spiritual output multiplier per agent."""
@@ -214,10 +240,14 @@ class Population:
                                weights=self.formation[alive],
                                minlength=n_regions)
         region_mean = form_sum / np.maximum(pop, 1)
-        del_sum = np.bincount(self.region[alive],
-                              weights=self.delusion[alive],
-                              minlength=n_regions)
-        region_mean_del = del_sum / np.maximum(pop, 1)
+        skin_sum = np.bincount(self.region[alive],
+                               weights=self.skin[alive],
+                               minlength=n_regions)
+        region_mean_skin = skin_sum / np.maximum(pop, 1)
+        flesh_sum = np.bincount(self.region[alive],
+                                weights=self.flesh[alive],
+                                minlength=n_regions)
+        region_mean_flesh = flesh_sum / np.maximum(pop, 1)
 
         # Assign regions to slots according to per-region birth counts.
         birth_regions = np.repeat(np.arange(n_regions), n_births)[:total]
@@ -225,7 +255,8 @@ class Population:
         # Each child gets a random living "parent" from its region.
         parent_form = np.empty(total)
         parent_born = np.zeros(total, dtype=bool)
-        parent_delusion = np.full(total, 0.3)
+        parent_skin = np.full(total, 0.05)
+        parent_flesh = np.full(total, 0.3)
         for r in range(n_regions):
             mask = birth_regions == r
             k = int(mask.sum())
@@ -241,7 +272,8 @@ class Population:
                 parents = rng.choice(candidates, size=k, p=pw)
                 parent_form[mask] = self.formation[parents]
                 parent_born[mask] = self.born[parents]
-                parent_delusion[mask] = self.delusion[parents]
+                parent_skin[mask] = self.skin[parents]
+                parent_flesh[mask] = self.flesh[parents]
             else:
                 parent_form[mask] = region_mean[r]
 
@@ -275,10 +307,15 @@ class Population:
         self.martyr[slots] = False
         self.seed[slots] = False  # the seed passes at death, never at birth
         # Blindness is raised, not chosen: children start inside their
-        # parents' frame, blended with the ambient culture's.
-        w_d = cfg.delusion_inheritance
-        self.delusion[slots] = np.clip(
-            w_d * parent_delusion + (1 - w_d) * region_mean_del[birth_regions]
+        # parents' frame, blended with the ambient culture's — the
+        # secular coating and the ancient default each inherited.
+        w_s = cfg.skin_inheritance
+        self.skin[slots] = np.clip(
+            w_s * parent_skin + (1 - w_s) * region_mean_skin[birth_regions]
+            + rng.normal(0, 0.03, total), 0.0, 1.0)
+        w_f = cfg.delusion_inheritance
+        self.flesh[slots] = np.clip(
+            w_f * parent_flesh + (1 - w_f) * region_mean_flesh[birth_regions]
             + rng.normal(0, 0.05, total), 0.0, 1.0)
         return total
 
