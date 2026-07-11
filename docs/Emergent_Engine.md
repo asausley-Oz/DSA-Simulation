@@ -536,6 +536,48 @@ age — the Shaking — arriving one of three ways:
 Ensemble (100 seeds, 800 ticks): 55% fullness / 21% consummation /
 19% parousia / 5% contested (the end not yet arrived).
 
+## Capstone: cartography of the finished cosmos
+
+450 histories at 800 ticks — a 5×5 grid of witness_contact_rate ×
+container_growth (8 seeds/cell) plus phase lines over toil,
+nearness_pull, container_growth, ratchet_rate, and
+tribulation_apostasy (10 seeds/value). The finished model's verdicts:
+
+1. **The curse saves worlds.** Toil is the strongest knob in the
+   entire cosmos, and it is monotone: at toil = 0 (Eden's ease without
+   Eden's presence), only 10% of worlds reach fullness and half die
+   blind; at toil = 0.5, **every world reaches fullness**. Severe
+   mercy is load-bearing — remove Adam's curse and comfort kills the
+   world it blesses. Gen 3:17-19 as protective architecture.
+2. **Comfort is the only enemy that wins.** Weak divine pull now
+   produces MORE saved worlds (100% fullness at the weakest
+   nearness_pull): strong pull closes distance, closed distance breeds
+   comfort, comfort breeds the trap. Every knob that increases
+   hardship increases salvation; every knob that increases ease
+   increases death. The Beatitude paradox is the deepest invariant in
+   the model — it has survived every architecture change since v7.1.
+3. **The Container only wins where the witness is weak.** The grid's
+   corners: at witness 0.10, fullness collapses 62% → 12% as the
+   Container grows and blind death doubles; at witness 0.46, fullness
+   holds 50-75% across the trap's whole range. Hyperreality is not
+   invincible — it is unchallenged. The encounter still cracks what
+   the architecture cannot fully mute, if there are enough who go.
+4. **The trap decides HOW worlds are saved, not whether.** The
+   remains-vs-containment scatter separates into three bands: fullness
+   worlds die uncontained (containment ≤ 0.3, ~80% remains), parousia
+   worlds die contained (0.3-0.9 — rescue amid the sealed trap),
+   consummation worlds die at ~36% remains regardless. High
+   containment converts harvests into rescues; it rarely converts
+   them into losses.
+5. **The heavy record crushes early.** ratchet_rate is flat until
+   0.40, where blind death jumps to 40% and parousia vanishes — worlds
+   whose rebellion sticks too hard die before the fullness of time
+   can arrive.
+6. **The sift changes the census, not the verdict.**
+   tribulation_apostasy (even 0 → 40%/tick) leaves the outcome
+   distribution untouched; it determines who stands at the end, never
+   which end comes.
+
 ## Endings are attractors, not appointments
 
 There is no `year >= 2030` check. A run terminates only when a state
