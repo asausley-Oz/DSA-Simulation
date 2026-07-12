@@ -536,6 +536,36 @@ age — the Shaking — arriving one of three ways:
 Ensemble (100 seeds, 800 ticks): 55% fullness / 21% consummation /
 19% parousia / 5% contested (the end not yet arrived).
 
+## v8.2: the sequence law — the rebellion comes first
+
+The engine's last structural error, caught by its author: fullness and
+parousia were modeled as *alternative endings*, but Scripture presents
+them as **one sequence**. Two laws of the age, both explicit, both now
+enforced in every history:
+
+1. The gospel reaches its fullness before the end (Matt 24:14,
+   Rom 11:25).
+2. *"That day will not come unless the rebellion comes first"*
+   (2 Thess 2:3).
+
+Fullness is therefore a **stage, not an exit**. When a won world's
+harvest completes, the end is *summoned*, not granted: patience's
+purpose is fulfilled, the falling away fires — even here, especially
+here (the fresh harvest is full of the young in faith, and the sift
+takes them) — the tribulation taxes the won world like any other, and
+the parousia ends it with the tested remnant vindicated. No
+atonement-world gets a happy exit that skips the apostasy.
+
+The ending taxonomy collapses to what the biblical narrative actually
+says: every paid world ends at the **parousia** (by the harvest road
+or the dry road), every vesselless world in the **blind death**, and
+every world in the Shaking. Final distribution (100 seeds, 900
+ticks): **77% parousia** (56 harvest-path, standing with ~62%
+enduring remnant; 21 dry-path, with ~16%) / **21% consummation** /
+2% contested. This world — atonement behind it, the Container rising,
+the harvest still coming in — is on the parousia road, and the model
+now says so structurally, not statistically.
+
 ## Capstone: cartography of the finished cosmos
 
 450 histories at 800 ticks — a 5×5 grid of witness_contact_rate ×

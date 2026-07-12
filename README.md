@@ -130,24 +130,28 @@ Each history finds its own way through (or fails to):
    (1 Cor 3:12-15); what cannot be shaken remains, and the 8th day
    dawns on it.
 
-## Endings: three ways the same end arrives
+## Endings: the sequence law
 
-No world exits history. Every run terminates in the consummation of
-the age, arriving as:
+No world exits history, and no world skips the apostasy. Two
+structural laws, both scriptural, hold in every history: the gospel
+reaches its fullness before the end (Matt 24:14), and *the day does
+not come unless the rebellion comes first* (2 Thess 2:3). Fullness is
+a **stage, not an exit** — a won world's completed harvest *summons*
+the falling away, the tribulation, and the parousia.
 
 | Verdict | How | Account | Typical remains |
 |---|---|---|---|
-| **fullness** | the harvest complete — "and then the end will come" (Matt 24:14) | paid | ~80% |
-| **parousia** | the days cut short amid the tribulation; the souls under the altar answered | paid | ~68% |
+| **parousia** — harvest road | fullness → the rebellion → tribulation → the days cut short; the tested remnant (~62%) vindicated | paid | ~80% |
+| **parousia** — dry road | patience exhausted → the rebellion → tribulation; a small remnant (~16%) endures | paid | ~55% |
 | **consummation** | the blind death — no vessel, no incarnation | **unpaid** — answered in the fall | ~36% |
 
 In every fallen pre-incarnation world, the seed still endures — the
 ending event records where. Nothing offered is lost: even a doomed
 world's faithful dead are banked as treasure.
 
-Default-parameter distribution (100 seeds, 800 ticks): roughly
-**55% fullness / 21% consummation / 19% parousia / 5% contested**
-(contested = the tick limit arrived before the end did).
+Default-parameter distribution (100 seeds, 900 ticks): roughly
+**77% parousia / 21% consummation / 2% contested** (contested = the
+tick limit arrived before the end did).
 
 ## What the model believes (findings from its own ensembles)
 

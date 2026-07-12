@@ -62,6 +62,7 @@ class EmergentSimulation:
         # the great falling away (2 Thess 2).
         self.patience_active = False
         self.falling_away_tick: Optional[int] = None
+        self.fullness_tick: Optional[int] = None  # the harvest complete
         self.tribulation_martyrs = 0   # the souls under the altar (Rev 6:9)
         self._harvest_ema = 0.0
         self._dry_streak = 0
@@ -544,8 +545,15 @@ class EmergentSimulation:
             self._dry_streak = 0
         if self._dry_streak < cfg.patience_dry_ticks:
             return
+        self._the_falling_away(
+            f"patience exhausted after {cfg.patience_dry_ticks} dry ticks")
 
-        # --- THE GREAT FALLING AWAY --------------------------------
+    def _the_falling_away(self, cause: str):
+        """THE GREAT FALLING AWAY (2 Thess 2). Fires once, by either
+        road: the harvest drying in an unwon world, or the harvest
+        COMPLETING — for the day does not come unless the rebellion
+        comes first (2 Thess 2:3), even in a world that was won."""
+        cfg, pop, env = self.cfg, self.pop, self.env
         self.patience_active = False
         self.falling_away_tick = self.tick
         # The love of many grows cold: the lukewarm fall away.
@@ -572,16 +580,19 @@ class EmergentSimulation:
         env.events.append({
             "tick": self.tick, "region": "GLOBAL",
             "type": "falling_away",
-            "detail": (f"patience exhausted after {cfg.patience_dry_ticks} "
-                       f"dry ticks; {n_fallen} grow cold, strong delusion "
+            "detail": (f"{cause}; {n_fallen} grow cold, strong delusion "
                        "sent, the adversary loosed for a little while")})
 
     def _check_endings(self, row: dict):
         """State-only terminal attractors on covenant distance. No dates.
 
-        Renewal must hold much longer than consummation: a spike of
-        nearness is not the new creation — it has to survive the comfort
-        loop that has undone every golden age before it.
+        Two structural laws of the age, both scriptural, both enforced:
+        the gospel reaches its fullness before the end (Matt 24:14),
+        AND the day does not come unless the rebellion comes first
+        (2 Thess 2:3). Fullness is therefore a STAGE, not an exit: a
+        won world's harvest completes — and then the falling away, the
+        tribulation, and the parousia. Every atonement-world ends at
+        the parousia; every vesselless world in the blind death.
         """
         cfg = self.cfg
 
@@ -595,9 +606,8 @@ class EmergentSimulation:
         if self.patience_active:
             self._ending_streak["consummation"] = 0
 
-        # Renewal lands AT the ratchet floor, never beneath it: the
-        # ceiling rises with the accumulated weight of history, so a
-        # late-age world can still renew — carrying its scars with it.
+        # Fullness lands AT the ratchet floor, never beneath it: the
+        # ceiling rises with the accumulated weight of history.
         renewal_ceiling = max(
             cfg.renewal_distance_ceiling,
             cfg.ratchet_floor_gain * row["rebellion"] + 0.08)
@@ -606,6 +616,26 @@ class EmergentSimulation:
             self._ending_streak["fullness"] += 1
         else:
             self._ending_streak["fullness"] = 0
+
+        # THE HARVEST COMPLETE: fullness does not end the world — it
+        # summons the end. The full number has come in (Rom 11:25),
+        # patience's purpose is fulfilled, and the rebellion comes
+        # first (2 Thess 2:3), even here — especially here.
+        if (self._ending_streak["fullness"] >= cfg.renewal_sustain_ticks
+                and self.fullness_tick is None
+                and self.atonement_tick is not None):
+            self.fullness_tick = self.tick
+            self.env.events.append({
+                "tick": self.tick, "region": "GLOBAL",
+                "type": "fullness",
+                "detail": (f"the harvest of the earth is ripe (Rev 14:15)"
+                           f" — remnant {row['remnant_share']:.3f}; the "
+                           "full number has come in (Rom 11:25), and the "
+                           "end is summoned: the rebellion comes first")})
+            if self.falling_away_tick is None:
+                self._the_falling_away(
+                    "the harvest complete — the rebellion comes first "
+                    "(2 Thess 2:3)")
         # After the great falling away the verdict is in: the remaining
         # arc is tribulation, not gradual renewal (2 Thess 2:8) — and
         # the tribulation is cut short for the sake of the elect
@@ -629,36 +659,24 @@ class EmergentSimulation:
                 self._the_shaking("parousia")
                 return
 
-        # No world exits history: what was "renewal" is FULLNESS — the
-        # harvest complete, "and then the end will come" (Matt 24:14).
-        # Every verdict is the consummation of the age; they differ only
-        # in how the same end arrives and in what remains.
-        sustain = {"consummation": cfg.consummation_sustain_ticks,
-                   "fullness": cfg.renewal_sustain_ticks}
-        for name, streak in self._ending_streak.items():
-            if streak >= sustain[name] and self.ending is None:
-                self.ending = name
-                if name == "fullness":
-                    detail = (f"the harvest of the earth is ripe "
-                              f"(Rev 14:15) — remnant "
-                              f"{row['remnant_share']:.3f} at distance "
-                              f"{row['distance']:.3f}; the gospel has "
-                              "reached its fullness, and then the end "
-                              "comes (Matt 24:14)")
-                else:
-                    detail = (f"distance {row['distance']:.3f}, "
-                              f"remnant {row['remnant_share']:.3f}")
-                    # Even a consummated world does not extinguish the
-                    # seed: the bearer endures the end (Gen 3:15).
-                    bearer = np.flatnonzero(self.pop.alive & self.pop.seed)
-                    if bearer.size:
-                        r_b = self.env.names[
-                            int(self.pop.region[bearer[0]])]
-                        detail += f"; the seed endures in {r_b}"
-                self.env.events.append({
-                    "tick": self.tick, "region": "GLOBAL",
-                    "type": name, "detail": detail})
-                self._the_shaking(name)
+        # The blind death: the only ending besides the parousia. No
+        # world exits history by getting better — a won world's harvest
+        # summons the sequence above; a vesselless world falls here.
+        if (self._ending_streak["consummation"]
+                >= cfg.consummation_sustain_ticks and self.ending is None):
+            self.ending = "consummation"
+            detail = (f"distance {row['distance']:.3f}, "
+                      f"remnant {row['remnant_share']:.3f}")
+            # Even a consummated world does not extinguish the seed:
+            # the bearer endures the end (Gen 3:15).
+            bearer = np.flatnonzero(self.pop.alive & self.pop.seed)
+            if bearer.size:
+                r_b = self.env.names[int(self.pop.region[bearer[0]])]
+                detail += f"; the seed endures in {r_b}"
+            self.env.events.append({
+                "tick": self.tick, "region": "GLOBAL",
+                "type": "consummation", "detail": detail})
+            self._the_shaking("consummation")
 
     def _the_shaking(self, verdict: str):
         """Every history ends in the same event (Hag 2:6, Heb 12:27):
@@ -731,7 +749,11 @@ class EmergentSimulation:
             "seed_raised": self.pop.seed_raised,
             "seed_endures": bool((self.pop.alive & self.pop.seed).any()),
             "seed_fulfilled": self.incarnation_tick is not None,
+            "fullness_tick": self.fullness_tick,
             "falling_away_tick": self.falling_away_tick,
+            "ending_path": ("harvest" if self.fullness_tick is not None
+                            else ("dry" if self.falling_away_tick is not None
+                                  else None)),
             "patience_open": self.patience_active,
             "final_skin": last["skin"],
             "final_containment": last["containment"],

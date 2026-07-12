@@ -229,7 +229,7 @@ def main():
         gs = fig.add_gridspec(2, 5, height_ratios=[1.4, 1])
 
         ax = fig.add_subplot(gs[0, :2])
-        pivot = (grid.assign(renew=(grid["outcome"] == "fullness"))
+        pivot = (grid.assign(renew=(grid["outcome"] == "parousia"))
                  .groupby([gy, gx])["renew"].mean().unstack())
         im = ax.imshow(pivot.values * 100, origin="lower", cmap="RdYlGn",
                        vmin=0, vmax=100, aspect="auto")
@@ -237,7 +237,7 @@ def main():
         ax.set_yticks(range(len(vy)), [str(v) for v in vy])
         ax.set_xlabel("container_growth (the trap)")
         ax.set_ylabel("witness_contact_rate (the encounter)")
-        ax.set_title("Fullness share (%): the witness vs the Container")
+        ax.set_title("Parousia share (%): the witness vs the Container")
         for i in range(len(vy)):
             for j in range(len(vx)):
                 ax.text(j, i, f"{pivot.values[i, j]*100:.0f}",
@@ -246,12 +246,12 @@ def main():
 
         ax = fig.add_subplot(gs[0, 2:])
         med = grid.groupby([gx, gy]).agg(
-            renew=("outcome", lambda s: (s == "fullness").mean()),
+            renew=("outcome", lambda s: (s == "parousia").mean()),
             revivals=("n_revivals", "mean")).reset_index()
         ax.scatter(med["revivals"], med["renew"] * 100, c=med[gy],
                    cmap="viridis", s=60)
         ax.set_xlabel("mean revivals per history (cell average)")
-        ax.set_ylabel("fullness share (%)")
+        ax.set_ylabel("parousia share (%)")
         ax.set_title("Revival frequency vs. final outcome "
                      "(color = witness_contact_rate)")
         ax.grid(alpha=0.3)
