@@ -64,6 +64,9 @@ class EmergentSimulation:
         self.falling_away_tick: Optional[int] = None
         self.fullness_tick: Optional[int] = None  # the harvest complete
         self.tribulation_martyrs = 0   # the souls under the altar (Rev 6:9)
+        # The millennium and the descent (Rev 20-21).
+        self.millennium_tick: Optional[int] = None
+        self.release_tick: Optional[int] = None
         self._harvest_ema = 0.0
         self._dry_streak = 0
         self._ending_streak = {"consummation": 0, "fullness": 0}
@@ -122,6 +125,18 @@ class EmergentSimulation:
                 >= cfg.incarnation_max_duration):
             self._spring_atonement(incarnate, cause="laid down freely")
             incarnate = None
+
+        # ---- 0c. the millennium: correspondence at saturation ----------
+        # The beloved city hosts the reign; the two Jerusalems in
+        # maximal alignment, no merger — the most heaven and earth can
+        # share while remaining two. The trap decays under an embodied
+        # reign; strain and persecution wither.
+        if self.millennium_tick is not None and self.release_tick is None:
+            floor = np.clip(cfg.ratchet_floor_gain * env.rebellion, 0.0, 0.6)
+            env.distance = np.clip(env.distance - 0.02, floor, 1.0)
+            env.strain *= 0.97
+            env.persecution *= 0.80
+            env.containment *= 0.985
 
         # ---- 1. vamphoric drain on agents -----------------------------
         vamp = env.vamphoric[reg]
@@ -237,7 +252,9 @@ class EmergentSimulation:
         # In the tribulation, deception rises to lead astray — if
         # possible — even the elect (Matt 24:24): every remnant member
         # faces a per-tick apostasy chance shielded only by formation.
-        if self.falling_away_tick is not None and self.ending is None:
+        # It ends at the parousia — the millennium knows no sift.
+        if (self.falling_away_tick is not None and self.ending is None
+                and self.millennium_tick is None):
             p_trib = cfg.tribulation_apostasy * (1.0 - pop.formation)
             led_astray = (remnant & ~pop.seed
                           & (rng.random(pop.capacity) < p_trib))
@@ -256,6 +273,7 @@ class EmergentSimulation:
             m_count = np.bincount(reg[martyred], minlength=n_regions)
             martyr_share = m_count / np.maximum(agg["pop"], 1.0)
             in_tribulation = (self.falling_away_tick is not None
+                              and self.millennium_tick is None
                               and cfg.tribulation_martyr_mute)
             # Whatever the old world does with the blood, the martyrs
             # are banked double in the unshakeable substance — treasure
@@ -636,16 +654,29 @@ class EmergentSimulation:
                 self._the_falling_away(
                     "the harvest complete — the rebellion comes first "
                     "(2 Thess 2:3)")
-        # After the great falling away the verdict is in: the remaining
-        # arc is tribulation, not gradual renewal (2 Thess 2:8) — and
-        # the tribulation is cut short for the sake of the elect
-        # (Matt 24:22): the Parousia ends it with the remnant vindicated.
+        # After the great falling away the verdict is in: tribulation,
+        # cut short for the sake of the elect (Matt 24:22) — but the
+        # Parousia does not end the world. It opens the sequence of
+        # Revelation 20-21: millennium -> release -> Gog and Magog ->
+        # the passing away -> the DESCENT.
         if self.falling_away_tick is not None:
             self._ending_streak["fullness"] = 0
-            if (self.ending is None and
-                    self.tick - self.falling_away_tick
+
+            # THE PAROUSIA: the King arrives; the tribulation ends; the
+            # accuser is bound with a great chain; the beloved city
+            # hosts the reign of the first-resurrection body.
+            if (self.millennium_tick is None and self.ending is None
+                    and self.tick - self.falling_away_tick
                     >= cfg.parousia_after):
-                self.ending = "parousia"
+                self.millennium_tick = self.tick
+                if self.adversary is not None:
+                    self.adversary.released = False
+                    self.adversary.bound = True
+                self.env.persecution[:] = 0.0
+                self.env.nearness_floor_bonus = cfg.millennium_floor_bonus
+                # The Container is broken open by the one object it
+                # cannot ingest.
+                self.env.containment *= 0.3
                 self.env.events.append({
                     "tick": self.tick, "region": "GLOBAL",
                     "type": "parousia",
@@ -653,10 +684,77 @@ class EmergentSimulation:
                                f"enduring remnant "
                                f"{row['remnant_share']:.3f} vindicated, "
                                f"{self.tribulation_martyrs} souls under "
-                               f"the altar answered, the lawless one "
-                               "destroyed by the appearance of His "
-                               "coming")})
-                self._the_shaking("parousia")
+                               f"the altar answered in the first "
+                               "resurrection; the lawless one destroyed, "
+                               "the accuser bound with a great chain — "
+                               "the millennium of correspondence begins")})
+                return
+
+            # THE RELEASE: he must be loosed for a little while
+            # (Rev 20:3,7) — the nations deceived one final time, with
+            # no curse, no Container, no excuse: agency isolated from
+            # every condition ever built.
+            if (self.millennium_tick is not None
+                    and self.release_tick is None
+                    and self.tick - self.millennium_tick
+                    >= cfg.millennium_length):
+                self.release_tick = self.tick
+                if self.adversary is not None:
+                    self.adversary.bound = False
+                    self.adversary.released = True
+                    self.adversary.power = 0.4
+                deceived = (self.pop.alive & ~self.pop.born
+                            & ~self.pop.seed)
+                self.pop.flesh[deceived] = np.clip(
+                    self.pop.flesh[deceived] + cfg.final_deception,
+                    0.0, 1.0)
+                self.env.strain += 0.5
+                self.env.events.append({
+                    "tick": self.tick, "region": "GLOBAL",
+                    "type": "release",
+                    "detail": ("loosed from his prison, he goes out to "
+                               "deceive the nations at the four corners "
+                               "— Gog and Magog gather against the camp "
+                               "of the saints and the beloved city")})
+                return
+
+            # GOG AND MAGOG CONSUMED: fire from heaven, not the saints'
+            # swords, ends the last rebellion — then the first heaven
+            # and earth pass, and the city comes down.
+            if (self.release_tick is not None and self.ending is None
+                    and self.tick - self.release_tick
+                    >= cfg.gog_magog_window):
+                pop = self.pop
+                besiegers = (pop.alive & ~pop.born
+                             & (pop.flesh > 0.6))
+                struck = besiegers & (self.rng.random(pop.capacity)
+                                      < cfg.fire_from_heaven)
+                pop.alive[struck] = False
+                if self.adversary is not None:
+                    self.adversary.bound = True
+                    self.adversary.power = 0.0
+                self.ending = "descent"
+                self.env.events.append({
+                    "tick": self.tick, "region": "GLOBAL",
+                    "type": "final_rebellion",
+                    "detail": (f"fire came down from heaven and consumed "
+                               f"them ({int(struck.sum())} of the "
+                               "deceived) — the last rebellion proves "
+                               "the division was always agency, never "
+                               "conditions; the deceiver is thrown down "
+                               "for good")})
+                self._the_shaking("descent")
+                self.env.events.append({
+                    "tick": self.tick, "region": "GLOBAL",
+                    "type": "descent",
+                    "detail": (f"the holy city, new Jerusalem, coming "
+                               f"down out of heaven from God — the "
+                               f"treasure ({self.treasure:.2f}) descends "
+                               "as the city-who-is-the-people; the tree "
+                               "of life restored, Babel healed, the "
+                               "face seen; the dwelling of God is with "
+                               "man, the gates never shut, and the "
+                               "increase never ends")})
                 return
 
         # The blind death: the only ending besides the parousia. No
@@ -751,6 +849,8 @@ class EmergentSimulation:
             "seed_fulfilled": self.incarnation_tick is not None,
             "fullness_tick": self.fullness_tick,
             "falling_away_tick": self.falling_away_tick,
+            "millennium_tick": self.millennium_tick,
+            "release_tick": self.release_tick,
             "ending_path": ("harvest" if self.fullness_tick is not None
                             else ("dry" if self.falling_away_tick is not None
                                   else None)),

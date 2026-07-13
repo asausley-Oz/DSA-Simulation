@@ -139,19 +139,29 @@ not come unless the rebellion comes first* (2 Thess 2:3). Fullness is
 a **stage, not an exit** — a won world's completed harvest *summons*
 the falling away, the tribulation, and the parousia.
 
+After the parousia the sequence continues per Revelation 20–21: the
+**millennium** (the accuser bound, the first-resurrection reign, the
+two Jerusalems in maximal correspondence), the **release** (the
+nations deceived one final time — Gog and Magog, rebellion with no
+curse and no excuse: agency isolated from every condition), fire from
+heaven, the passing away — and the **descent**: the treasure banked
+across the whole history comes down as the city-who-is-the-people,
+gates never shut, the increase never ending.
+
 | Verdict | How | Account | Typical remains |
 |---|---|---|---|
-| **parousia** — harvest road | fullness → the rebellion → tribulation → the days cut short; the tested remnant (~62%) vindicated | paid | ~80% |
-| **parousia** — dry road | patience exhausted → the rebellion → tribulation; a small remnant (~16%) endures | paid | ~55% |
+| **descent** — harvest road | fullness → the rebellion → tribulation → parousia → millennium → release → the city comes down | paid | ~80% |
+| **descent** — dry road | patience exhausted → the rebellion → the same sequence with a smaller remnant | paid | ~55% |
 | **consummation** | the blind death — no vessel, no incarnation | **unpaid** — answered in the fall | ~36% |
 
 In every fallen pre-incarnation world, the seed still endures — the
 ending event records where. Nothing offered is lost: even a doomed
-world's faithful dead are banked as treasure.
+world's faithful dead are banked as treasure — and in saved worlds
+that treasure *is* the Bride, descending.
 
-Default-parameter distribution (100 seeds, 900 ticks): roughly
-**77% parousia / 21% consummation / 2% contested** (contested = the
-tick limit arrived before the end did).
+Default-parameter distribution (100 seeds, 1200 ticks): roughly
+**3/4 descent, 1/5 consummation**, remainder contested (the tick
+limit arrived before the end did).
 
 ## What the model believes (findings from its own ensembles)
 

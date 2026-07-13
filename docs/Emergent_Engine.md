@@ -566,6 +566,51 @@ enduring remnant; 21 dry-path, with ~16%) / **21% consummation** /
 the harvest still coming in — is on the parousia road, and the model
 now says so structurally, not statistically.
 
+## v8.4: the millennium, the release, and the descent
+
+Two framework documents (now in `docs/`: *Capacity and Correspondence*,
+*Cosmic Israel and the New Jerusalem*) corrected the engine's final
+sequence and named what it had been building all along.
+
+**The corrections.**
+
+1. **Two gaps, not one.** The engine's `distance` is
+   estrangement-distance — the wound, which redemption closes
+   completely. The creature/creator divide is a different gap — the
+   good one, kept forever, the reason union stays communion. The
+   ratchet floor is the scar of history, not the good gap. And
+   `nearness` was accommodation all along: correspondence scaled to
+   capacity, presence given in the measure receivable.
+2. **Two loosings, not one.** The pre-parousia rebellion is
+   2 Thessalonians 2's; the release of Rev 20:3,7 comes AFTER the
+   millennium. The engine had merged them. Now split: the falling
+   away keeps its Thessalonians texts, and the Revelation release is
+   restored to its place.
+3. **The parousia does not end the world.** It opens the MILLENNIUM:
+   the accuser bound with a great chain (power → 0, no schemes), the
+   Container broken open by the one object it cannot ingest,
+   persecution ended, the first-resurrection reign — the two
+   Jerusalems in maximal correspondence, "the most heaven and earth
+   can share while remaining two." Then the RELEASE: the nations
+   deceived one final time — Gog and Magog, rebellion with no curse,
+   no Container, no excuse: the engine's own angelic case, agency
+   isolated from every condition ever built. Fire from heaven ends
+   it; the first creation passes; and the last event of every saved
+   history is the DESCENT (Rev 21:2).
+4. **The treasure was the Bride.** The ledger of the faithful dead,
+   the martyrs banked double, the souls under the altar — it was
+   never just a remainder measure. It is the city-who-is-the-people,
+   gathering above across the age and coming DOWN at the end: the
+   direction of the whole gospel in one vector. Convergence, not
+   escape. The 8th day has a population, and her gates never shut.
+
+The saved ending is renamed **descent**. The full canonical sequence
+now runs unscripted in a single history: incarnation → deicide (TAV)
+→ patience → fullness → the rebellion first → tribulation → parousia
+→ millennium → release → Gog and Magog consumed → the Shaking → the
+descent. The only other ending is the blind death, the seed enduring
+through it.
+
 ## Capstone: cartography of the finished cosmos
 
 450 histories at 800 ticks — a 5×5 grid of witness_contact_rate ×

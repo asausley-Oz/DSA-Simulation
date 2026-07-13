@@ -101,6 +101,8 @@ def plot_run(history, events, env_names, out_dir: Path):
               "deicide": "darkred", "atonement": "navy",
               "falling_away": "saddlebrown", "parousia": "cyan",
               "shaking": "magenta", "container": "darkviolet",
+              "release": "olive", "final_rebellion": "maroon",
+              "descent": "royalblue",
               "consummation": "dimgray", "fullness": "gold"}
     if not events.empty:
         region_order = list(env_names) + ["GLOBAL"]
@@ -163,7 +165,7 @@ def main():
 
         if not args.no_plots:
             fig, axes = plt.subplots(1, 3, figsize=(16, 5))
-            colors = {"consummation": "tab:red", "fullness": "gold",
+            colors = {"consummation": "tab:red", "descent": "gold",
                       "contested": "tab:blue", "parousia": "cyan"}
 
             counts = df["outcome"].value_counts()
@@ -229,7 +231,7 @@ def main():
         gs = fig.add_gridspec(2, 5, height_ratios=[1.4, 1])
 
         ax = fig.add_subplot(gs[0, :2])
-        pivot = (grid.assign(renew=(grid["outcome"] == "parousia"))
+        pivot = (grid.assign(renew=(grid["outcome"] == "descent"))
                  .groupby([gy, gx])["renew"].mean().unstack())
         im = ax.imshow(pivot.values * 100, origin="lower", cmap="RdYlGn",
                        vmin=0, vmax=100, aspect="auto")
@@ -237,7 +239,7 @@ def main():
         ax.set_yticks(range(len(vy)), [str(v) for v in vy])
         ax.set_xlabel("container_growth (the trap)")
         ax.set_ylabel("witness_contact_rate (the encounter)")
-        ax.set_title("Parousia share (%): the witness vs the Container")
+        ax.set_title("Descent share (%): the witness vs the Container")
         for i in range(len(vy)):
             for j in range(len(vx)):
                 ax.text(j, i, f"{pivot.values[i, j]*100:.0f}",
@@ -246,12 +248,12 @@ def main():
 
         ax = fig.add_subplot(gs[0, 2:])
         med = grid.groupby([gx, gy]).agg(
-            renew=("outcome", lambda s: (s == "parousia").mean()),
+            renew=("outcome", lambda s: (s == "descent").mean()),
             revivals=("n_revivals", "mean")).reset_index()
         ax.scatter(med["revivals"], med["renew"] * 100, c=med[gy],
                    cmap="viridis", s=60)
         ax.set_xlabel("mean revivals per history (cell average)")
-        ax.set_ylabel("parousia share (%)")
+        ax.set_ylabel("descent share (%)")
         ax.set_title("Revival frequency vs. final outcome "
                      "(color = witness_contact_rate)")
         ax.grid(alpha=0.3)
@@ -261,9 +263,8 @@ def main():
             sub = lines[lines["parameter"] == param]
             stats = sub.groupby("value")["outcome"].value_counts(
                 normalize=True).unstack(fill_value=0)
-            for outcome, color in [("fullness", "gold"),
+            for outcome, color in [("descent", "gold"),
                                    ("consummation", "tab:red"),
-                                   ("parousia", "cyan"),
                                    ("contested", "tab:blue")]:
                 if outcome in stats:
                     ax.plot(stats.index, stats[outcome] * 100, "o-",

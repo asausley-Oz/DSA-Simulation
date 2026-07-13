@@ -42,7 +42,8 @@ class Adversary:
         self.power = 0.20
         self.exposure = 0.0     # how thoroughly he has been named
         self.disarmed = False   # set by the atonement
-        self.released = False   # loosed for a little while (Rev 20:3)
+        self.released = False   # his loosed rage (2 Thess 2 / Rev 20:3)
+        self.bound = False      # chained through the millennium (Rev 20:2)
         self.deicide_urge = 0.0  # the compulsion he cannot resist
         self.cooldowns = {"quench": 0, "gild": 0, "schism": 0,
                           "accuse": 0, "incite": 0}
@@ -64,6 +65,12 @@ class Adversary:
         cfg = self.cfg
         events: List[dict] = []
         accuse_region: Optional[int] = None
+
+        # Bound with a great chain (Rev 20:1-3): through the millennium
+        # he deceives the nations no more, until he must be released.
+        if self.bound:
+            self.power = max(0.0, self.power - 0.05)
+            return events, accuse_region, False
 
         pop_w = agg["pop"] / max(agg["pop"].sum(), 1.0)
 

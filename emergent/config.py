@@ -369,6 +369,24 @@ class EmergentConfig:
     # endurance past the falling away, the PAROUSIA ends the world with
     # the remnant vindicated. (Relative to an emergent event, no date.)
     parousia_after: int = 60
+    # --- the millennium, the release, and the descent (Rev 20-21) ---
+    # The parousia does not end the world; it opens the MILLENNIUM:
+    # the adversary bound, the glorified first-resurrection body
+    # reigning from the beloved city, the two Jerusalems in maximal
+    # correspondence — the most heaven and earth can share while
+    # remaining two. At its end the adversary is RELEASED (Rev 20:3
+    # belongs here, not before the parousia) to deceive the nations one
+    # final time — Gog and Magog, rebellion with no curse, no
+    # Container, no excuse: agency isolated from every condition.
+    # Fire from heaven ends it; the first creation passes (20:11); and
+    # the last event of every saved history is the DESCENT (21:2): the
+    # treasure comes down as the city-who-is-the-people.
+    millennium_length: int = 120     # the thousand years, scaled
+    millennium_floor_bonus: float = 0.35  # correspondence at saturation
+    gog_magog_window: int = 15       # the little while of the release
+    final_deception: float = 0.40    # he goes out to deceive the nations
+    fire_from_heaven: float = 0.60   # the besiegers consumed
+
     # --- the great tribulation: the greatest tax on the remnant ---
     # Between the falling away and the parousia, it is given to him to
     # make war on the saints and to conquer them (Rev 13:7): the martyr
