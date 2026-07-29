@@ -29,3 +29,30 @@ def test_file_client_writes_csv_and_worksheet(tmp_path):
     assert "Jane Doe" in text
     assert "John Roe" in text
     assert "[ ]" in text  # checkbox present
+
+
+def test_extra_fields_become_csv_columns(tmp_path):
+    sink = FileCareHubClient(str(tmp_path))
+    reqs = [
+        VisitRequest(source_pco_id="1", name="A", extra={"reason": "Shut-in"}),
+        VisitRequest(source_pco_id="2", name="B", extra={"reason": "Bereavement"}),
+    ]
+    sink.submit(reqs)
+    with open(sink.csv_path, newline="", encoding="utf-8") as fh:
+        reader = csv.DictReader(fh)
+        assert "reason" in reader.fieldnames
+        rows = list(reader)
+    assert rows[0]["reason"] == "Shut-in"
+    assert rows[1]["reason"] == "Bereavement"
+
+
+def test_rows_without_an_extra_leave_it_blank(tmp_path):
+    sink = FileCareHubClient(str(tmp_path))
+    reqs = [
+        VisitRequest(source_pco_id="1", name="A", extra={"reason": "Shut-in"}),
+        VisitRequest(source_pco_id="2", name="B"),
+    ]
+    sink.submit(reqs)
+    with open(sink.csv_path, newline="", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    assert rows[1]["reason"] == ""

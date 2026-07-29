@@ -65,23 +65,34 @@ class FileCareHubClient:
         )
         return SubmitResult(submitted=list(visit_requests), detail=detail)
 
+    BASE_FIELDS = [
+        "name",
+        "phone",
+        "email",
+        "address",
+        "request_type",
+        "priority",
+        "notes",
+        "source_pco_id",
+    ]
+
+    def _fieldnames(self, visit_requests: List[VisitRequest]) -> List[str]:
+        """Base columns, plus any ``extra`` keys used, in first-seen order."""
+        extras: List[str] = []
+        for vr in visit_requests:
+            for key in vr.extra:
+                if key not in extras and key not in self.BASE_FIELDS:
+                    extras.append(key)
+        return self.BASE_FIELDS + extras
+
     def _write_csv(self, visit_requests: List[VisitRequest]) -> None:
-        fieldnames = [
-            "source_pco_id",
-            "name",
-            "email",
-            "phone",
-            "address",
-            "request_type",
-            "priority",
-            "notes",
-        ]
+        fieldnames = self._fieldnames(visit_requests)
         with open(self.csv_path, "w", newline="", encoding="utf-8") as fh:
-            writer = csv.DictWriter(fh, fieldnames=fieldnames)
+            writer = csv.DictWriter(fh, fieldnames=fieldnames, extrasaction="ignore")
             writer.writeheader()
             for vr in visit_requests:
-                row = {k: vr.to_row().get(k, "") for k in fieldnames}
-                writer.writerow(row)
+                row = vr.to_row()
+                writer.writerow({k: row.get(k, "") for k in fieldnames})
 
     def _write_worksheet(self, visit_requests: List[VisitRequest]) -> None:
         lines = [
