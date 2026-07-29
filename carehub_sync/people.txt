@@ -1,0 +1,6 @@
+# One name per line. Lines starting with # are ignored.
+# Run:  python -m planning_center_carehub.cli sync --names-file people.txt --dry-run
+Denny Litton
+Diane Edwards
+Robin Clendenning
+Sam Markham

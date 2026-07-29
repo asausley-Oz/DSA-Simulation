@@ -3,3 +3,7 @@ __pycache__/
 output/
 *.egg-info/
 .venv/
+
+# carehub_sync secrets and generated output
+carehub_sync/.env
+carehub_sync/output/
