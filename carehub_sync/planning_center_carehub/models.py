@@ -61,6 +61,19 @@ class VisitRequest:
     request_type: str = "Visit"
     priority: str = "Normal"
     notes: str = ""
+    # Structured fields kept alongside the flattened ones above, because
+    # CareHub's import template wants name and address split into columns.
+    first_name: str = ""
+    last_name: str = ""
+    street: str = ""
+    city: str = ""
+    state: str = ""
+    zip_code: str = ""
+    birthday: str = ""
+    campus: str = ""
+    # CareHub separates a standing note about the person ("prefers text") from
+    # the description of this particular request.
+    description: str = ""
     # Free-form fields the caller can add without changing the model.
     extra: dict = field(default_factory=dict)
 
